@@ -12,8 +12,10 @@
 void addDecl(char* procName, char* varName, Type varType, int stackSlotNum);
 
 // Check if declared (1 = true, 0 = false)
-int inDeclared(char* varName);
+int inDeclared(char* procName, char* varName);
 
 // Get type of declaration (returns type)
-Type getType(char* varName);
+Type getType(char* procName, char* varName);
+
+void test();
 
