@@ -357,7 +357,9 @@ static void print_constant(Constant constant) {
 }
 
 static void print_indent(int level) {
-	for (int i = 0; i < level * 4; i++) {
+	int i = 0;
+
+    for (i = 0; i < level * 4; i++) {
 		printf(" ");
 	}
 }

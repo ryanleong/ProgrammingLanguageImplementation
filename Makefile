@@ -1,6 +1,6 @@
-HDR =	wiz.h piz.h ast.h pretty.h std.h missing.h
+HDR =	wiz.h piz.h ast.h pretty.h std.h missing.h symbol.h
 
-OBJ =	wiz.o piz.o liz.o ast.o pretty.o std.o
+OBJ =	wiz.o piz.o liz.o ast.o pretty.o std.o symbol.o
 
 CC = 	gcc -Wall
 
