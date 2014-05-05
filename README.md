@@ -1,31 +1,31 @@
-ProgrammingLanguageImplementation
-=================================
+Programming Language Implementation
+====================================
 
 With this README file you should also have found these:
 
-Makefile :  A makefile for the COMP90045 project 2014
+    Makefile :  A makefile for the COMP90045 project 2014
 
-ast.c :     Defines Iz Abstract Syntax Trees in C; actually
-            the bulk of definitions are in ast.h
+    ast.c :     Defines Iz Abstract Syntax Trees in C; actually
+                the bulk of definitions are in ast.h
 
-ast.h :     Many possible design choices - this is just one
-            possible way of defining the data structures that
-            make up the ast
+    ast.h :     Many possible design choices - this is just one
+                possible way of defining the data structures that
+                make up the ast
 
-liz.l :     A lex specification for Iz
+    liz.l :     A lex specification for Iz
+    
+    missing.h : A header file that makes up for bison shortcomings
 
-missing.h : A header file that makes up for bison shortcomings
+    piz.y :     A bison specification for Iz
 
-piz.y :     A bison specification for Iz
+    pretty.c :  A pretty-printer - actually not really; for now
+                this is just a stub
 
-pretty.c :  A pretty-printer - actually not really; for now
-            this is just a stub
-
-pretty.h :  A header file for pretty.c
-
-std.h :     A header file with some standard C macros
-
-wiz.c :     The driver program
+    pretty.h :  A header file for pretty.c
+    
+    std.h :     A header file with some standard C macros
+    
+    wiz.c :     The driver program
 
 To get started, study these files, in particular liz.l, ast.h,
 and piz.y.  On a Unix machine you should be able to just type
