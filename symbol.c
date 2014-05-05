@@ -36,12 +36,12 @@ ProcList* findProc(char* procName);
 void test() {
     printf("\n\n");
     
-    addDecl("getName", "sdf", 2, 2);
-    addDecl("main", "stuff", 1, 3);
-    addDecl("main", "things", 1, 3);
-    addDecl("getName", "9393", 2, 2);
-
-    printf("%d\n", inDeclared("f", "things"));
+//    addDecl("getName", "sdf", 2, 2);
+//    addDecl("main", "stuff", 1, 3);
+//    addDecl("main", "things", STRING_TYPE, 3);
+//    addDecl("getName", "9393", 2, 2);
+//
+//    printf("%d\n", getType("getName", "93933"));
 
     //////////////////////////////////////////////////////
     // Print out everything
@@ -169,5 +169,32 @@ int inDeclared(char* procName, char* varName) {
 }
 
 Type getType(char* procName, char* varName) {
-    return 0;
+
+	// If proc list is not empty
+	if (ListofProcs) {
+		// check if proc exist
+		ProcList *proc = findProc(procName);
+
+		if (proc) {
+
+			Declaration *d = proc->firstDecl;
+
+			while(d) {
+
+				// if declaration exist
+				if (strcmp(d->name, varName) == 0) {
+					return d->type;
+				}
+
+				d = d->next;
+			}
+
+		} else {
+			// Proc does not exist
+			return -1;
+		}
+	}
+
+	// Proc list empty
+    return -1;
 }

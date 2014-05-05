@@ -18,5 +18,5 @@ int inDeclared(char* procName, char* varName);
 // returns -1 if proc or declaration does not exist
 Type getType(char* procName, char* varName);
 
+// IGNORE THIS
 void test();
-
