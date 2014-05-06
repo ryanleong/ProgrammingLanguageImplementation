@@ -43,6 +43,17 @@ void test() {
 //
 //    printf("%d\n", getType("getName", "93933"));
 
+    addProc("main");
+    addProc("test");
+    addProc("dsfdsf");
+
+    addDecl("main", "temp", INT_TYPE, 0);
+    addDecl("test", "d", BOOL_TYPE, 0);
+    printf("Dec %d\n", addDecl("main", "tempd", INT_TYPE, 0));
+    addDecl("main", "temp", STRING_TYPE, 0);
+
+    printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
+
     //////////////////////////////////////////////////////
     // Print out everything
     while(ListofProcs) {
@@ -81,43 +92,19 @@ ProcList* findProc(char* procName) {
     return NULL;
 }
 
-void addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
-
-    // add declaration
-    Declaration *d = (Declaration *) malloc(sizeof(Declaration));
-    d->name = varName;
-    d->type = varType;
-    d->stackSlotNum = stackSlotNum;
-
+int addProc(char* procName) {
     if(ListofProcs) {
         // check if proc exist
         ProcList *proc = findProc(procName);
 
         if(proc) {
-
-        	// place declaration at start of list
-            if (proc->firstDecl == NULL) {
-            	proc->firstDecl = d;
-			}
-            else {
-            	Declaration *dec = proc->firstDecl;
-
-            	// Insert declaration at end of list
-                while(dec) {
-                    if (dec->next == NULL) {
-                        dec->next = d;
-                        break;
-                    }
-
-                    dec = dec->next;
-                }
-            }
+        	return 0;
         }
         else {
             // create new proc at end of list
             ProcList *temp = (ProcList *) malloc(sizeof(ProcList));
             temp->procName = procName;
-            temp->firstDecl = d;
+            temp->firstDecl = NULL;
             temp->nextProc = NULL;
 
             LastProc->nextProc = temp;
@@ -129,12 +116,60 @@ void addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
         // create new proc
         ProcList *temp = (ProcList *) malloc(sizeof(ProcList));
         temp->procName = procName;
-        temp->firstDecl = d;
+        temp->firstDecl = NULL;
         temp->nextProc = NULL;
 
         ListofProcs = temp;
         LastProc = temp;
     }
+
+    return 1;
+}
+
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
+
+    if(ListofProcs) {
+        // check if proc exist
+        ProcList *proc = findProc(procName);
+
+        if(proc) {
+            // add declaration
+            Declaration *d = (Declaration *) malloc(sizeof(Declaration));
+            d->name = varName;
+            d->type = varType;
+            d->stackSlotNum = stackSlotNum;
+
+        	// place declaration at start of list
+            if (proc->firstDecl == NULL) {
+            	proc->firstDecl = d;
+			}
+            else {
+            	Declaration *dec = proc->firstDecl;
+
+            	int isDeclared = 0;
+
+            	// Insert declaration at end of list
+                while(dec) {
+
+                	// Check if exist
+                	if(strcmp(dec->name, varName) == 0) {
+                		isDeclared = 1;
+                	}
+
+                    if (dec->next == NULL && isDeclared == 0) {
+                        dec->next = d;
+                        return 1;
+                    }
+
+                    dec = dec->next;
+                }
+            }
+        }
+
+    }
+
+    // Failed when no procs exist
+	return 0;
 }
 
 int inDeclared(char* procName, char* varName) {
@@ -168,7 +203,7 @@ int inDeclared(char* procName, char* varName) {
     return 0;
 }
 
-Type getType(char* procName, char* varName) {
+int checkType(char* procName, char* varName, Type exprType) {
 
 	// If proc list is not empty
 	if (ListofProcs) {
@@ -183,18 +218,30 @@ Type getType(char* procName, char* varName) {
 
 				// if declaration exist
 				if (strcmp(d->name, varName) == 0) {
-					return d->type;
+
+					// check if same type
+					if (d->type == exprType) {
+						// Same Type
+						return 1;
+					}
+					else {
+						// Different Type
+						return 0;
+					}
 				}
 
 				d = d->next;
 			}
 
+			// If declaration does not exist
+			return -1;
+
 		} else {
 			// Proc does not exist
-			return -1;
+			return -2;
 		}
 	}
 
 	// Proc list empty
-    return -1;
+    return -2;
 }
