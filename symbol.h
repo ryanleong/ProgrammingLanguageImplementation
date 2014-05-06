@@ -8,15 +8,19 @@
 
 #include "ast.h"
 
+// Add Proc
+// Return 1 if success, 0 if failed
+int addProc(char* procName);
+
 // Add new declaration
-void addDecl(char* procName, char* varName, Type varType, int stackSlotNum);
+// Return 1 if success, 0 if failed
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);
 
-// Get type of declaration (returns type)
-// returns -1 if proc or declaration does not exist
-Type getType(char* procName, char* varName);
+// Get type of declaration (returns type) (1 = true, 0 = false)
+int getType(char* procName, char* varName, Type varType, Type exprType);
 
 // IGNORE THIS
 void test();
