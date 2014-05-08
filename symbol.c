@@ -142,6 +142,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
         	// place declaration at start of list
             if (proc->firstDecl == NULL) {
             	proc->firstDecl = d;
+                return 1;
 			}
             else {
             	Declaration *dec = proc->firstDecl;
