@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include "ast.h"
 #include "std.h"
-#include "pretty.h"
+#include "analyze.h"
 #include "missing.h"
 
 const char  *progname;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
         if (!parsed_program)
             report_error_and_exit("Empty file");
         else
-            pretty_prog(fp, parsed_program);
+            analyze(fp, parsed_program);
     else
         report_error_and_exit("Unable to generate code");
 

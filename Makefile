@@ -1,6 +1,6 @@
-HDR =	wiz.h piz.h ast.h pretty.h std.h missing.h symbol.h
+HDR =	wiz.h piz.h ast.h analyze.h std.h missing.h symbol.h
 
-OBJ =	wiz.o piz.o liz.o ast.o pretty.o std.o symbol.o
+OBJ =	wiz.o piz.o liz.o ast.o analyze.o std.o symbol.o
 
 CC = 	gcc -Wall
 
@@ -18,5 +18,3 @@ clean:
 
 $(OBJ):	$(HDR)
 
-submit:
-	submit 90045 1b Makefile liz.l piz.y pretty.c wiz.c ast.c std.c wiz.h piz.h ast.h pretty.h std.h missing.h

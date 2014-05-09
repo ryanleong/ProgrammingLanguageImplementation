@@ -61,7 +61,7 @@ extern const char *relop_names[];
 
 typedef enum {
     BOOL_TYPE, INT_TYPE, FLOAT_TYPE, STRING_TYPE,
-    INT_ARRAY_TYPE, FLOAT_ARRAY_TYPE, BOOL_ARRAY_TYPE
+    INT_ARRAY_TYPE, FLOAT_ARRAY_TYPE, BOOL_ARRAY_TYPE, ERROR_TYPE
 } Type;
 
 typedef union {
