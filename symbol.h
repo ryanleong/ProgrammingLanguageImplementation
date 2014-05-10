@@ -26,5 +26,15 @@ int inDeclared(char* procName, char* varName);
 // -2 if proc does not exist
 int checkType(char* procName, char* varName, Type exprType);
 
+// Get size of stack for initializing of proc
+// Returns -1 if error (e.g. No such proc)
+// Returns stack size (int)
+int getStackSize(char* procName);
+
+// Get stack slot number for variable
+// Returns -1 if error (e.g. No such proc)
+// Returns stack slot number (int)
+int getStackSlotNum(char* procName, char* varName);
+
 // IGNORE THIS
 void test();

@@ -48,14 +48,20 @@ void test() {
     addProc("dsfdsf");
 
     addDecl("main", "temp", INT_TYPE, 0);
-    addDecl("test", "d", BOOL_TYPE, 0);
-    printf("Dec %d\n", addDecl("main", "tempd", INT_TYPE, 0));
     addDecl("main", "temp", STRING_TYPE, 0);
+    addDecl("main", "tempd", INT_TYPE, 1);
+    addDecl("test", "d", BOOL_TYPE, 0);
+    
 
     printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
+    printf("Stack Size of main: %d\n", getStackSize("main"));
+    printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
 
     //////////////////////////////////////////////////////
     // Print out everything
+    
+    printf("\n");
+    
     while(ListofProcs) {
         printf("ProcName: %s", ListofProcs->procName);
 
@@ -245,4 +251,61 @@ int checkType(char* procName, char* varName, Type exprType) {
 
 	// Proc list empty
     return -2;
+}
+
+int getStackSize(char* procName) {
+	
+	// If proc list not empty
+	if (ListofProcs) {
+		// Find proc
+		ProcList *proc = findProc(procName);
+		
+		// Check if proc exist
+		if (proc) {
+			// Get first declaration
+			Declaration *d = proc->firstDecl;
+			
+			int total = 0; 
+			
+			while (d) {
+				total++;
+				d = d->next;
+			}
+			
+			return total;
+		}
+	}
+	
+	// Proc list empty
+	return -1;
+}
+
+int getStackSlotNum(char* procName, char* varName) {
+	
+	// If proc list not empty
+	if (ListofProcs) {
+		// Find proc
+		ProcList *proc = findProc(procName);
+		
+		// Check if proc exist
+		if (proc) {
+			// Get first declaration
+			Declaration *d = proc->firstDecl;
+			
+			while (d) {
+				
+				// if declaration exist
+				if (strcmp(d->name, varName) == 0) {
+					// return stack slot number
+					return d->stackSlotNum;
+				}
+
+				d = d->next;
+			}
+			
+		}
+	}
+	
+	// Proc list empty
+	return -1;
 }
