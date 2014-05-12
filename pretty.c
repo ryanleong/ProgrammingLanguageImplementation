@@ -269,6 +269,8 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 	switch (expr->kind) {
 		Type ID_type;
 		int stackNo;
+		int reg; // for Binop use
+		int reg1;
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
@@ -298,9 +300,21 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			print_write_constant(expr->constant);
 			break;
 		case EXPR_BINOP:
-			print_expr(expr->e1, depth + 1);
-			printf(" %s ", binop_names[expr->binop]);
-			print_expr(expr->e2, depth + 1);
+			//Ask about type in binop
+			reg = print_binop(expr->e1, 0, proc_id);
+			reg1 = print_binop(expr->e2, 1, proc_id);
+			switch(expr->binop){	//switch for main tree
+				case BINOP_ADD:
+					printf("add_int r%d r%d r%d \n", reg, reg, reg1);
+					printf("call_builtin print_int \n");
+					break;
+				case BINOP_SUB:
+					break;
+				case BINOP_MUL:
+					break;
+				case BINOP_DIV:
+					break;
+			}			
 			break;	
 	}
 }
@@ -338,13 +352,66 @@ static void print_write_constant(Constant constant) {
 	}
 }
 
+int print_binop(Expr expr, int reg, char* proc_id) {
+	int curr_reg = reg;
+	int next_reg;
+	switch (expr->kind) {
+		Type ID_type;
+		int stackNo;
+		case EXPR_ID:
+			ID_type = getType(proc_id,expr->id);
+			stackNo = getStackSlotNum(proc_id, expr->id);
+			//Look up id in the symbol table to get the type and stack
+			switch (ID_type){			//placeholder			
+				case BOOL_TYPE:
+					printf("string_const r%d, %d\n", curr_reg,stackNo); //Change the value to lookup for value
+					break;
+				case INT_TYPE:
+					printf("load r%d, %d \n", curr_reg,stackNo);
+					break;
+				case FLOAT_TYPE:
+					printf("load r%d, %d \n", curr_reg,stackNo);
+					break;
+					}
+			break;
+		case EXPR_CONST:
+			print_constant(expr->constant, curr_reg);
+			break;
+		case EXPR_BINOP:
+			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
+			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
+			switch(expr->binop){	
+				case BINOP_ADD:
+					printf("add_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;
+				case BINOP_SUB:
+					printf("sub_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;
+				case BINOP_MUL:
+					printf("mul_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;
+				case BINOP_DIV:
+					printf("div_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;
+				case BINOP_AND:
+					printf("and r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;
+				case BINOP_OR:
+					printf("or r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+					break;					
+			}
+			break;
+			}		
+	return curr_reg;		
+}
+
 static void print_expr(Expr expr, int depth) {
 	switch (expr->kind) {
 		case EXPR_ID:
 			printf("%s", expr->id);
 			break;
 		case EXPR_CONST:
-			print_constant(expr->constant);
+			//print_constant(expr->constant);
 			break;
 		case EXPR_BINOP:
 		    if (depth != 1)
@@ -394,19 +461,22 @@ static void print_fncall(Stmt stmt, int l) {
 	printf(");\n");
 }
 
-static void print_constant(Constant constant) {
+static void print_constant(Constant constant, int reg) {
 	switch (constant.type) {
 		case BOOL_CONSTANT:
-			printf("%s", constant.val.bool_val ? "true" : "false");
+			//printf("%s", constant.val.bool_val ? "true" : "false");
+			printf("string_const r%d, %s\n", constant.val.bool_val ? "true" : "false");
 			break;
 		case INT_CONSTANT:
-			printf("%d", constant.val.int_val);
+			printf("int_const r%d, %d\n", reg,constant.val.int_val);
 			break;
 		case FLOAT_CONSTANT:
-			printf("%s", constant.val.float_val);
+			printf("int_const r%d, %f\n", reg, constant.val.float_val);
 			break;
 		case STRING_CONSTANT:
-			printf("%s", constant.val.str_val);
+			//printf("%s", constant.val.str_val);
+			//Should not be possible?
+			printf("string_const r%d, %s\n", reg, constant.val.str_val);
 			break;
 	}
 }

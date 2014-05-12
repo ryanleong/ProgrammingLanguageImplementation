@@ -1,6 +1,6 @@
 static Procs sort_procs(Procs);
 static void print_indent(int);
-static void print_constant(Constant);
+static void print_constant(Constant, int);
 static void print_expr(Expr, int);
 static void print_write_expr(Expr, int, char*);
 static void print_write_constant(Constant);
@@ -25,3 +25,4 @@ static void print_fncall(Stmt, int);
 static void print_intervals(Intervals);
 static void print_interval(Interval);
 void pretty_prog(FILE *, Program);
+int print_binop(Expr, int, char*);
