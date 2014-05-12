@@ -210,8 +210,8 @@ int inDeclared(char* procName, char* varName) {
     return 0;
 }
 
-int checkType(char* procName, char* varName, Type exprType) {
-
+Type getType(char* procName, char* varName){
+    
 	// If proc list is not empty
 	if (ListofProcs) {
 		// check if proc exist
@@ -225,9 +225,43 @@ int checkType(char* procName, char* varName, Type exprType) {
 
 				// if declaration exist
 				if (strcmp(d->name, varName) == 0) {
+                    return d->type;
+				}
+
+				d = d->next;
+			}
+
+			// If declaration does not exist
+			return -1;
+
+		} else {
+			// Proc does not exist
+			return -2;
+		}
+	}
+
+	// Proc list empty
+    return -2;
+}
+
+int checkType(char* procName, char* varName, Type exprType) {
+
+	// If proc list is not empty
+	if (ListofProcs) {
+		// check if proc exist
+		ProcList *proc = findProc(procName);
+
+		if (proc) {
+
+			Declaration *d = proc->firstDecl;
+
+			while(d) {
+				// if declaration exist
+				if (strcmp(d->name, varName) == 0) {
 
 					// check if same type
 					if (d->type == exprType) {
+						
 						// Same Type
 						return 1;
 					}

@@ -198,7 +198,7 @@ void analyze_expr(Expr expr, char* procName)
 {
 	switch (expr->kind) {
 		case EXPR_ID:
-			if(inDeclared(expr->id, procName) != 1)
+			if(inDeclared(procName, expr->id) != 1)
 			{
 				printf("no declaration of %s in line %d.\n", expr->id, expr->lineno);
 			}
@@ -230,15 +230,22 @@ Type getExprType(Expr expr, char* procName)
 			exprType = getType(procName,expr->id);
 			break;
 		case EXPR_CONST:
-			if(expr->constant.type == BOOL_TYPE)
+			if(expr->constant.type == BOOL_CONSTANT)
 				exprType =  BOOL_TYPE;
-			else if(expr->constant.type == INT_TYPE)
+			else if(expr->constant.type == INT_CONSTANT)
 				exprType =  INT_TYPE;
-			else if(expr->constant.type == FLOAT_TYPE)
+			else if(expr->constant.type == FLOAT_CONSTANT)
 				exprType =  FLOAT_TYPE;
 			break;
 		case EXPR_BINOP:
-			if(getExprType(expr->e1, procName)==ERROR_TYPE || getExprType(expr->e2, procName)==ERROR_TYPE)
+			if(expr->binop == BINOP_AND || expr->binop ==BINOP_OR)
+			{
+				if(getExprType(expr->e1, procName)==BOOL_TYPE && getExprType(expr->e2, procName)==BOOL_TYPE)
+					exprType = BOOL_TYPE;
+				else
+					exprType = ERROR_TYPE;
+			}
+			else if(getExprType(expr->e1, procName)==ERROR_TYPE || getExprType(expr->e2, procName)==ERROR_TYPE)
 			{
 				exprType =  ERROR_TYPE;
 			}
@@ -255,7 +262,14 @@ Type getExprType(Expr expr, char* procName)
 				exprType =  FLOAT_TYPE;
 			break;
 		case EXPR_UNOP:
-			if(getExprType(expr->e1, procName)==BOOL_TYPE)
+			if(expr->binop == UNOP_NOT)
+			{
+				if(getExprType(expr->e1, procName)==BOOL_TYPE)
+					exprType = BOOL_TYPE;
+				else
+					exprType = ERROR_TYPE;
+			}
+			else if(getExprType(expr->e1, procName)==BOOL_TYPE)
 			{
 				printf("wrong Unop_expression type of bool in line %d.\n", expr->lineno);
 				exprType =  ERROR_TYPE;
@@ -289,10 +303,10 @@ Type getExprType(Expr expr, char* procName)
 		case EXPR_ARRAY:
 			//...
 			break;
+		}
 		if (exprType == ERROR_TYPE)
 		{
 			printf("Error type of expression! \n");
 		}
 		return exprType;
-	}
 }

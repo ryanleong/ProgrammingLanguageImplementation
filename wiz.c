@@ -16,6 +16,7 @@
 #include "std.h"
 #include "analyze.h"
 #include "missing.h"
+#include "pretty.h"
 
 const char  *progname;
 const char  *iz_infile;
@@ -63,8 +64,10 @@ int main(int argc, char **argv) {
     if (pretty_print_only) 
         if (!parsed_program)
             report_error_and_exit("Empty file");
-        else
+        else {
             analyze(fp, parsed_program);
+			pretty_prog(fp, parsed_program);
+		}
     else
         report_error_and_exit("Unable to generate code");
 

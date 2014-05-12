@@ -36,5 +36,7 @@ int getStackSize(char* procName);
 // Returns stack slot number (int)
 int getStackSlotNum(char* procName, char* varName);
 
+Type getType(char* procName, char* varName);
+
 // IGNORE THIS
 void test();
