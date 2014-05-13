@@ -225,6 +225,8 @@ static Type getExprType(Expr expr, char* proc_id) {
 			return FLOAT_TYPE;
 		}
 	}
+	
+	return BOOL_TYPE;
 }
 
 static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
@@ -292,7 +294,6 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			// Check expression/var/const type
 			switch(evalType) {
 				case INT_TYPE:
-
 					// check for RELOP type
 					switch(expr->relop){
 						case RELOP_EQ:
@@ -468,8 +469,8 @@ static void print_write(Stmt stmt, int l, char* proc_id) {
 
 static void print_write_expr(Expr expr, int depth, char* proc_id) {
 	switch (expr->kind) {
-		int ID_type;
-		int ID_type2;
+		int ID_type = 0;
+		int ID_type2 = 0;
 		int stackNo;
 		int reg; // for Binop use
 		int reg1;
@@ -502,19 +503,50 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			print_write_constant(expr->constant);
 			break;
 		case EXPR_BINOP:
-			//Ask about type in binop
 			reg = print_binop(expr->e1, 0, proc_id);
 			reg1 = print_binop(expr->e2, 1, proc_id);
-			//print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
+			ID_type = getExprType(expr->e1, proc_id);
+			ID_type2 = getExprType(expr->e2, proc_id);
+			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
+			if ((ID_type + ID_type2) >= 3){
+				printf("call_builtin print_real \n");
+			}
+			else if ((ID_type + ID_type2) == 2){
+				printf("call_builtin print_int \n");
+			}
+			else{
+				printf("call_builtin print_bool \n");
+			}
 			break;	
+		case EXPR_RELOP:
+			reg =  print_binop(expr->e1, 0, proc_id);
+			reg1 = print_binop(expr->e2, 1, proc_id);
+			ID_type = getExprType(expr->e1, proc_id);
+			ID_type2 = getExprType(expr->e2, proc_id);
+			print_relop_string(expr->relop, reg, reg1, ID_type, ID_type2);
+			printf("call_builtin print_bool \n");
+			break;
+		case EXPR_UNOP:
+			reg =  print_binop(expr->e1, 0, proc_id);
+			ID_type = getExprType(expr->e1, proc_id);
+			print_unop_string(expr->unop, reg, ID_type);
+			if (ID_type == 2){
+				printf("call_builtin print_real \n");
+			}
+			else if (ID_type == 1 ){
+				printf("call_builtin print_int \n");
+			}
+			else{
+				printf("call_builtin print_bool \n");
+			}
 	}
 }
 
 void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2){
-	int ID = ID1 + ID2; //To see if it's float or int. float = 3.
+	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
 	switch(binop){
 		case BINOP_ADD:
-			if (ID == 3){ 
+			if (ID >= 3){ 
 				printf("add_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
 			}
 			else{
@@ -522,7 +554,7 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
 			}
 			break;
 		case BINOP_SUB:
-			if (ID == 3){
+			if (ID >= 3){
 				printf("sub_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
@@ -530,7 +562,7 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
 			}
 			break;
 		case BINOP_MUL:
-			if (ID == 3){
+			if (ID >= 3){
 				printf("mul_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
@@ -538,7 +570,7 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
 				}
 			break;
 		case BINOP_DIV:
-			if (ID == 3){
+			if (ID >= 3){
 				printf("div_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
@@ -552,7 +584,6 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
 			printf("or r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
 			break;		
 	}
-	return 0;
 }
 
 static void print_write_constant(Constant constant) {
@@ -600,7 +631,7 @@ int print_binop(Expr expr, int reg, char* proc_id) {
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
 			//Look up id in the symbol table to get the type and stack
-			switch (ID_type){			//placeholder			
+			switch (ID_type){						
 				case BOOL_TYPE:
 					printf("string_const r%d, %d\n", curr_reg,stackNo); //Change the value to lookup for value
 					break;
@@ -616,18 +647,94 @@ int print_binop(Expr expr, int reg, char* proc_id) {
 			print_constant(expr->constant, curr_reg);
 			break;
 		case EXPR_BINOP:
-			if (expr->e1->id != NULL){
-				ID_type = getType(proc_id, expr->e1->id);
-			}
-			if (expr->e2->id != NULL){
-				ID_type2 = getType(proc_id, expr->e2->id);
-			}
+			ID_type = getExprType(expr->e1, proc_id);
+			ID_type2 = getExprType(expr->e2, proc_id);
+			
 			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
 			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
-			}		
+		case EXPR_RELOP:
+			ID_type = getExprType(expr->e1, proc_id);
+			ID_type2 = getExprType(expr->e2, proc_id);
+			
+			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
+			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
+			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
+			break;
+		case EXPR_UNOP:	
+			ID_type = getExprType(expr->e1, proc_id);
+			print_unop_string(expr->unop, curr_reg, ID_type);
+			break;
+			
+			}
 	return curr_reg;		
+}
+
+void print_relop_string(int relop, int curr_reg, int next_reg, int ID1, int ID2){
+	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
+	switch(relop){
+		case RELOP_EQ:
+			if (ID >= 3){
+				printf("cmp_eq_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);
+			}
+			else{
+				printf("cmp_eq_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);
+			}
+			break;
+		case RELOP_NE:
+			if (ID >= 3){
+				printf("cmp_ne_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			else{
+				printf("cmp_ne_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			break;
+		case RELOP_LT:
+			if (ID >= 3){
+				printf("cmp_lt_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			else{
+				printf("cmp_lt_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			break;
+		case RELOP_GT:
+			if (ID >= 3){
+				printf("cmp_gt_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			else{
+				printf("cmp_gt_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			break;
+		case RELOP_LE:
+			if (ID >= 3){
+				printf("cmp_le_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			else{
+				printf("cmp_le_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+			break;
+		case RELOP_GE:
+			if (ID >= 3){
+				printf("cmp_ge_real r%d r%d r%d\n",curr_reg, curr_reg, next_reg);}
+			else{
+				printf("cmp_ge_int r%d r%d r%d\n",curr_reg, curr_reg, next_reg);}
+			break;
+	}
+}
+
+void print_unop_string(int unop, int reg, int ID){
+	switch(unop){
+		case UNOP_MINUS:
+			if (ID == 2){
+				printf("real_const r%d, -1\n", reg+1);
+				printf("mul_real r%d r%d r%d \n", reg, reg, reg+1);
+			}
+			
+			else{
+				printf("int_const r%d, -1\n", reg+1);
+				printf("mul_int r%d r%d r%d \n", reg, reg, reg+1);
+			}
+			break;
+		case UNOP_NOT:
+			printf("not r%d, r%d\n", reg, reg);
+			break;
+	
+	}
+
+
 }
 
 static void print_expr(Expr expr, int depth) {
@@ -690,7 +797,7 @@ static void print_constant(Constant constant, int reg) {
 	switch (constant.type) {
 		case BOOL_CONSTANT:
 			//printf("%s", constant.val.bool_val ? "true" : "false");
-			printf("string_const r%d, %s\n", constant.val.bool_val ? "true" : "false");
+			printf("string_const r%d, %s\n", reg, constant.val.bool_val ? "true" : "false");
 			break;
 		case INT_CONSTANT:
 			printf("int_const r%d, %d\n", reg,constant.val.int_val);
