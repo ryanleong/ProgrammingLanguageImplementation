@@ -16,7 +16,8 @@
 #include "codegen.h"
 #include "symbol.h"
 
-
+int loopcount = 0;
+int ifcount = 0;
 
 void pretty_prog(FILE *fp, Program prog) {
 	Procs sorted_procs = sort_procs(prog->procs);
@@ -226,7 +227,7 @@ static Type getExprType(Expr expr, char* proc_id) {
 	}
 }
 
-static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
+static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
 
 	// TODO Check if e1 or e2 are expressions
 
@@ -255,22 +256,20 @@ static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 			break;
 		case EXPR_BINOP: {
 			// evaluate expression
-			printf("\n");
 			print_binop(expr, reg, proc_id);
-			printf("\n");
-
 			return getExprType(expr, proc_id);
 			break;
 		}
 		case EXPR_RELOP: {
-			// Calculate if it is an expression
+			// Print label if while loop
+			if (stmt_type == 1) {
+				// Add label to branch to at top of loop
+				printf(":%s\n", label1);
+			}
 
-			//print_binop(expr->e2, reg, proc_id);
-
-
-			Type e1Type = print_cond(expr->e1, l, proc_id, reg);
+			Type e1Type = print_cond(expr->e1, proc_id, reg, stmt_type, label1, label2);
 			reg++;
-			Type e2Type = print_cond(expr->e2, l, proc_id, reg);
+			Type e2Type = print_cond(expr->e2, proc_id, reg, stmt_type, label1, label2);
 
 			Type evalType = -1;
 
@@ -287,6 +286,8 @@ static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 			else if (e1Type == BOOL_TYPE && e2Type == BOOL_TYPE) {
 				evalType = BOOL_TYPE;
 			}
+
+
 
 			// Check expression/var/const type
 			switch(evalType) {
@@ -345,15 +346,15 @@ static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 					break;
 			}
 
-			// Do true 
+			if (stmt_type == 0) {
+				printf("branch_on_false r%d %s\n", (reg-1), label1);
+			}
+			else if (stmt_type == 1) {
+				// Branch away if false
+				printf("branch_on_false r%d %s\n", (reg-1), label2);
+			}
 
-
-			printf("branch_on_false r%d %s\n", (reg-1), "is_false");
-
-			// Do False
-			printf(":is_false\n");
-
-			// Jump to next label
+			
 
 			break; 
 		}
@@ -362,6 +363,10 @@ static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 	return -1;
 }
 
+static Type print_while(Expr expr, char* proc_id, int reg) {
+	printf("Here\n");
+	return -1;
+}
 
 static void print_stmt(Stmt stmt, int l, char* proc_id) {
 	switch (stmt->kind) {
@@ -373,10 +378,33 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			break;
 		case STMT_COND:
 			//print_cond(stmt->info.cond, l);
-			print_cond(stmt->info.cond.cond, l, proc_id, 0);
+			print_cond(stmt->info.cond.cond, proc_id, 0, 0, "if_is_false", "");
+
+			// Print then statements
+			print_stmts(stmt->info.cond.then_branch, l, proc_id);
+
+			// Do False
+			printf(":if_is_false\n");
+
+			// Print else statements
+			if (stmt->info.cond.else_branch != NULL) {
+				print_stmts(stmt->info.cond.else_branch, l, proc_id);
+			}
+			
 			break;
 		case STMT_WHILE:
-			//print_while(stmt->info.loop, l);
+			// print while condition
+			print_cond(stmt->info.loop.cond, proc_id, 0, 1, "top_of_loop", "loop_is_false");
+
+			// Print statements
+			print_stmts(stmt->info.loop.body, l, proc_id);
+
+			// Print unconditional branch
+			printf("branch_uncond %s\n", "top_of_loop");
+
+			// Print end loop label
+			printf(":loop_is_false\n");
+
 			break;
 		case STMT_READ:
 			print_read(stmt, l, proc_id);
