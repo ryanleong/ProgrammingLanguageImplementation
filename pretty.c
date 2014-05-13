@@ -267,7 +267,8 @@ static void print_write(Stmt stmt, int l, char* proc_id) {
 
 static void print_write_expr(Expr expr, int depth, char* proc_id) {
 	switch (expr->kind) {
-		Type ID_type;
+		int ID_type;
+		int ID_type2;
 		int stackNo;
 		int reg; // for Binop use
 		int reg1;
@@ -303,20 +304,54 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			//Ask about type in binop
 			reg = print_binop(expr->e1, 0, proc_id);
 			reg1 = print_binop(expr->e2, 1, proc_id);
-			switch(expr->binop){	//switch for main tree
-				case BINOP_ADD:
-					printf("add_int r%d r%d r%d \n", reg, reg, reg1);
-					printf("call_builtin print_int \n");
-					break;
-				case BINOP_SUB:
-					break;
-				case BINOP_MUL:
-					break;
-				case BINOP_DIV:
-					break;
-			}			
+			//print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
 			break;	
 	}
+}
+
+void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2){
+	int ID = ID1 + ID2; //To see if it's float or int. float = 3.
+	switch(binop){
+		case BINOP_ADD:
+			if (ID == 3){ 
+				printf("add_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			}
+			else{
+				printf("add_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			}
+			break;
+		case BINOP_SUB:
+			if (ID == 3){
+				printf("sub_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				}
+			else{
+				printf("sub_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			}
+			break;
+		case BINOP_MUL:
+			if (ID == 3){
+				printf("mul_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				}
+			else{
+				printf("mul_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				}
+			break;
+		case BINOP_DIV:
+			if (ID == 3){
+				printf("div_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				}
+			else{
+				printf("div_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				}
+			break;
+		case BINOP_AND:
+			printf("and r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			break;
+		case BINOP_OR:
+			printf("or r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			break;		
+	}
+	return 0;
 }
 
 static void print_write_constant(Constant constant) {
@@ -337,7 +372,7 @@ static void print_write_constant(Constant constant) {
 			break;
 		case FLOAT_CONSTANT:
 			//printf("%s", constant.val.float_val);
-			printf("int_const r0, %f", constant.val.float_val);
+			printf("real_const r0, %s", constant.val.float_val);
 			printf("\n");
 			printf("call_builtin print_real"); //with a function
 			printf("\n");
@@ -355,6 +390,8 @@ static void print_write_constant(Constant constant) {
 int print_binop(Expr expr, int reg, char* proc_id) {
 	int curr_reg = reg;
 	int next_reg;
+	int ID_type;
+	int ID_type2;
 	switch (expr->kind) {
 		Type ID_type;
 		int stackNo;
@@ -378,28 +415,15 @@ int print_binop(Expr expr, int reg, char* proc_id) {
 			print_constant(expr->constant, curr_reg);
 			break;
 		case EXPR_BINOP:
+			if (expr->e1->id != NULL){
+				ID_type = getType(proc_id, expr->e1->id);
+			}
+			if (expr->e2->id != NULL){
+				ID_type2 = getType(proc_id, expr->e2->id);
+			}
 			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
 			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
-			switch(expr->binop){	
-				case BINOP_ADD:
-					printf("add_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;
-				case BINOP_SUB:
-					printf("sub_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;
-				case BINOP_MUL:
-					printf("mul_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;
-				case BINOP_DIV:
-					printf("div_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;
-				case BINOP_AND:
-					printf("and r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;
-				case BINOP_OR:
-					printf("or r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
-					break;					
-			}
+			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 			}		
 	return curr_reg;		
@@ -471,7 +495,7 @@ static void print_constant(Constant constant, int reg) {
 			printf("int_const r%d, %d\n", reg,constant.val.int_val);
 			break;
 		case FLOAT_CONSTANT:
-			printf("int_const r%d, %f\n", reg, constant.val.float_val);
+			printf("real_const r%d, %s\n", reg, constant.val.float_val);
 			break;
 		case STRING_CONSTANT:
 			//printf("%s", constant.val.str_val);
