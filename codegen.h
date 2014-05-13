@@ -14,7 +14,7 @@ static void print_decls(Decls, int, char*);
 static void print_decl(Decl, int, char*);
 static void print_assign(Assign, int);
 //static void print_assign_array(Assign, int);
-//static void print_cond(Cond, int);
+static Type print_cond(Expr, int, char*, int);
 //static void print_while(While, int);
 static void print_params(Params);
 static void print_pram(Param);
