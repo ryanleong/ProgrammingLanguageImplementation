@@ -82,12 +82,7 @@ static void print_decls(Decls decls, int l, char* proc_id) {
 	}
 }
 
-static void print_assign(Assign assign, int l) {
-	//print_indent(l);
-	printf("%s := ", assign.id);
-	print_expr(assign.expr, 1);
-	printf(";\n");
-}
+
 
 
 static void print_params(Params params) {
@@ -372,7 +367,7 @@ static Type print_while(Expr expr, char* proc_id, int reg) {
 static void print_stmt(Stmt stmt, int l, char* proc_id) {
 	switch (stmt->kind) {
 		case STMT_ASSIGN:
-			print_assign(stmt->info.assign, l);
+			print_assign(stmt->info.assign, l, proc_id);
 			break;		
 		case STMT_ASSIGN_ARRAY:
 			//print_assign_array(stmt->info.assign, l);
@@ -420,6 +415,25 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			print_fncall(stmt, l);
 			break;
 	}
+}
+
+static void print_assign(Assign assign, int l, char* proc_id) {
+	//print_indent(l);
+	int ID_type;
+	int expr_type;
+	int slot;
+	ID_type = getType(proc_id,assign.id);
+	expr_type = getExprType(assign.expr, proc_id);
+	if (ID_type != expr_type){
+		printf("Illegal assignment\n"); //Put in proper error
+	}
+	else{
+		slot = getStackSlotNum(proc_id, assign.id);
+		printf("#assignment\n");
+		print_binop(assign.expr, 0, proc_id);
+		printf("store %d, r0\n", slot);
+		}
+	printf("\n");
 }
 
 static void print_read(Stmt stmt, int l, char* proc_id) {
