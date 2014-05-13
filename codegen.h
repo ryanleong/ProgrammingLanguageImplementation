@@ -27,3 +27,4 @@ static void print_interval(Interval);
 void pretty_prog(FILE *, Program);
 int print_binop(Expr, int, char*);
 void print_binop_string(int, int, int, int, int);
+static Type getExprType(Expr, char*);

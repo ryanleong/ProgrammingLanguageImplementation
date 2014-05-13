@@ -191,13 +191,44 @@ static void print_stmts(Stmts stmts, int l, char* proc_id) {
 	}
 }
 
+static Type getExprType(Expr expr, char* proc_id) {
+
+	if (expr->kind == EXPR_CONST){
+
+		// Return constant type
+		if (expr->constant.type == FLOAT_CONSTANT) {
+			return FLOAT_TYPE;	
+		}
+		else if (expr->constant.type == INT_CONSTANT){
+			return INT_TYPE;
+		}
+	}
+
+	else if (expr->kind == EXPR_ID) {
+		// Return var type
+		return getType(proc_id,expr->id);
+	}
+
+	else if (expr->kind == EXPR_BINOP) {
+		Type e1Type = getExprType(expr->e1, proc_id);
+		Type e2Type = getExprType(expr->e2, proc_id);
+
+		// Compare and return expression type
+		if (e1Type == INT_TYPE && e2Type == INT_TYPE) {
+			return INT_TYPE;
+		}
+		else if ((e1Type == FLOAT_TYPE && e2Type == FLOAT_TYPE) || 
+			(e1Type == INT_TYPE && e2Type == FLOAT_TYPE) ||
+			(e1Type == FLOAT_TYPE && e2Type == INT_TYPE)) {
+			
+			return FLOAT_TYPE;
+		}
+	}
+}
+
 static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 
-	// printf("e1 : %s\n", expr->e1->id);
-	// printf("e2 : %d\n", expr->e2->constant.val.int_val);
-	// /printf("Kind : %d\n", expr->e2->kind);
-
-
+	// TODO Check if e1 or e2 are expressions
 
 	switch(expr->kind) {
 		case EXPR_ID: {
@@ -222,8 +253,20 @@ static Type print_cond(Expr expr, int l, char* proc_id, int reg) {
 			}
 
 			break;
+		case EXPR_BINOP: {
+			// evaluate expression
+			printf("\n");
+			print_binop(expr, reg, proc_id);
+			printf("\n");
+
+			return getExprType(expr, proc_id);
+			break;
+		}
 		case EXPR_RELOP: {
 			// Calculate if it is an expression
+
+			//print_binop(expr->e2, reg, proc_id);
+
 
 			Type e1Type = print_cond(expr->e1, l, proc_id, reg);
 			reg++;
