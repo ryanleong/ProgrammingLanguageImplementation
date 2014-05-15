@@ -55,7 +55,7 @@ static void print_proc(Proc proc) {
 		printf("\n");
 		//Can get from tree?
 		if(proc->header->params)
-			print_params(proc->header->params,proc->header->id);
+			print_params(proc->header->params,proc->	header->id);
 		if(proc->decls)
 			print_decls(proc->decls, 1, proc->header->id);
 	}
@@ -63,7 +63,7 @@ static void print_proc(Proc proc) {
 	if (proc->body) {
 		print_stmts(proc->body, 1, proc->header->id);
 	}
-	printf("end\n");
+	//printf("end\n");
 
 }
 
@@ -117,7 +117,6 @@ static void print_pram(Param param, char* procName) {
 				break;
 		}
 	}
-	printf("%s", param->id);
 }
 
 static void print_decl(Decl decl, int l, char* proc_id) {
@@ -252,7 +251,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			break;
 		case EXPR_BINOP: {
 			// evaluate expression
-			// print_binop(expr, reg, proc_id);
+			// print_expr(expr, reg, proc_id);
 			// return getExprType(expr, proc_id);
 
 			// Print label if while loop
@@ -261,8 +260,8 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 				printf(":%s\n", label1);
 			}
 
-			reg = print_binop(expr->e1, reg, proc_id);
-			int reg1 = print_binop(expr->e2, reg+1, proc_id);
+			reg = print_expr(expr->e1, reg, proc_id);
+			int reg1 = print_expr(expr->e2, reg+1, proc_id);
 			int ID_type = getExprType(expr->e1, proc_id);
 			int ID_type2 = getExprType(expr->e2, proc_id);
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
@@ -284,8 +283,8 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 				printf(":%s\n", label1);
 			}
 
-			int reg1 = print_binop(expr->e1, reg, proc_id);
-			int reg2 = print_binop(expr->e2, reg+1, proc_id);
+			int reg1 = print_expr(expr->e1, reg, proc_id);
+			int reg2 = print_expr(expr->e2, reg+1, proc_id);
 
 			Type e1Type = getExprType(expr->e1, proc_id);
 			Type e2Type = getExprType(expr->e2, proc_id);
@@ -460,7 +459,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			print_write(stmt, l, proc_id);
 			break;
 		case STMT_FNCALL:
-			print_fncall(stmt, l);
+			print_fncall(stmt, l, proc_id);
 			break;
 	}
 }
@@ -478,7 +477,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 	else{
 		slot = getStackSlotNum(proc_id, assign.id);
 		printf("#assignment\n");
-		print_binop(assign.expr, 0, proc_id);
+		print_expr(assign.expr, 0, proc_id);
 		printf("store %d, r0\n", slot);
 		}
 	printf("\n");
@@ -518,7 +517,7 @@ static void print_read_array(Stmt stmt, int l) {
 	print_indent(l);
 	printf("read %s", stmt->info.array.id);
 	printf("[");
-	print_exprs(stmt->info.array.exprs);
+	//print_exprs(stmt->info.array.exprs);
 	printf("];\n");
 }
 
@@ -565,8 +564,8 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			print_write_constant(expr->constant);
 			break;
 		case EXPR_BINOP:
-			reg = print_binop(expr->e1, 0, proc_id);
-			reg1 = print_binop(expr->e2, 1, proc_id);
+			reg = print_expr(expr->e1, 0, proc_id);
+			reg1 = print_expr(expr->e2, 1, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
@@ -581,15 +580,15 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			}
 			break;	
 		case EXPR_RELOP:
-			reg =  print_binop(expr->e1, 0, proc_id);
-			reg1 = print_binop(expr->e2, 1, proc_id);
+			reg =  print_expr(expr->e1, 0, proc_id);
+			reg1 = print_expr(expr->e2, 1, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			print_relop_string(expr->relop, reg, reg1, ID_type, ID_type2);
 			printf("call_builtin print_bool \n");
 			break;
 		case EXPR_UNOP:
-			reg =  print_binop(expr->e1, 0, proc_id);
+			reg =  print_expr(expr->e1, 0, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			print_unop_string(expr->unop, reg, ID_type);
 			if (ID_type == 2){
@@ -681,7 +680,7 @@ static void print_write_constant(Constant constant) {
 	}
 }
 
-int print_binop(Expr expr, int reg, char* proc_id) {
+int print_expr(Expr expr, int reg, char* proc_id) {
 	int curr_reg = reg;
 	int next_reg;
 	int ID_type;
@@ -712,16 +711,16 @@ int print_binop(Expr expr, int reg, char* proc_id) {
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
-			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_RELOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_binop(expr->e1, curr_reg, proc_id);
-			next_reg = print_binop(expr->e2, curr_reg + 1, proc_id);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_UNOP:	
@@ -799,58 +798,26 @@ void print_unop_string(int unop, int reg, int ID){
 
 }
 
-static void print_expr(Expr expr, int depth) {
-	switch (expr->kind) {
-		case EXPR_ID:
-			printf("%s", expr->id);
-			break;
-		case EXPR_CONST:
-			//print_constant(expr->constant);
-			break;
-		case EXPR_BINOP:
-		    if (depth != 1)
-		    	printf("(");
-			print_expr(expr->e1, depth + 1);
-			printf(" %s ", binop_names[expr->binop]);
-			print_expr(expr->e2, depth + 1);
-			if (depth != 1)
-				printf(")");
-			break;
-		case EXPR_UNOP:
-			printf("%s ", unop_names[expr->unop]);
-			print_expr(expr->e1, depth + 1);
-			break;
-		case EXPR_RELOP:
-			print_expr(expr->e1, depth);
-			printf(" %s ", relop_names[expr->relop]);
-			print_expr(expr->e2, depth);
-			break;
-		case EXPR_ARRAY:
-			printf("%s", expr->id);
-			printf("[");
-			print_exprs(expr->es);
-			printf("]");
-			break;
-	}
-}
 
-static void print_exprs(Exprs exprs) {
+static void print_exprs(Exprs exprs,int reg, char* procName) {
 	Expr first = exprs->first;
 	Exprs rest = exprs->rest;
 	if (first) {
-			print_expr(first, 1);
+			print_expr(first,reg,procName);
 		if (rest) {
-			printf(", ");
-			print_exprs(rest);	
+			print_exprs(rest,reg+1,procName);	
 		}
 	}
 }
 
 
-static void print_fncall(Stmt stmt, int l) {
+static void print_fncall(Stmt stmt, int l, char* procName) {
 	printf("# fncall\n");
 	print_indent(l);
+	if(stmt->info.fncall.args)
+		print_exprs(stmt->info.fncall.args,0,procName);
 	printf("call proc_%s\n", stmt->info.fncall.id);
+
 }
 
 static void print_constant(Constant constant, int reg) {
