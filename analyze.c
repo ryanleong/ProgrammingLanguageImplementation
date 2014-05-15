@@ -70,7 +70,7 @@ void analyze_head(Header header)
     	printf("duplicate procedure name \"%s\"\n", procName);
     }
     else if(header->params)
-    	analyze_params(header->params);
+    	analyze_params(header->params, procName);
     if(strcmp(procName, "main") == 0)
     	hasMain = 1;
 }

@@ -187,46 +187,47 @@ static void print_stmts(Stmts stmts, int l, char* proc_id) {
 	}
 }
 
-static Type getExprType(Expr expr, char* proc_id) {
+// static Type getExprType(Expr expr, char* proc_id) {
 
-	if (expr->kind == EXPR_CONST){
+// 	if (expr->kind == EXPR_CONST){
 
-		// Return constant type
-		if (expr->constant.type == FLOAT_CONSTANT) {
-			return FLOAT_TYPE;	
-		}
-		else if (expr->constant.type == INT_CONSTANT){
-			return INT_TYPE;
-		}
-	}
+// 		// Return constant type
+// 		if (expr->constant.type == FLOAT_CONSTANT) {
+// 			return FLOAT_TYPE;	
+// 		}
+// 		else if (expr->constant.type == INT_CONSTANT){
+// 			return INT_TYPE;
+// 		}
+// 	}
 
-	else if (expr->kind == EXPR_ID) {
-		// Return var type
-		return getType(proc_id,expr->id);
-	}
+// 	else if (expr->kind == EXPR_ID) {
+// 		// Return var type
+// 		return getType(proc_id,expr->id);
+// 	}
 
-	else if (expr->kind == EXPR_BINOP) {
-		Type e1Type = getExprType(expr->e1, proc_id);
-		Type e2Type = getExprType(expr->e2, proc_id);
+// 	else if (expr->kind == EXPR_BINOP) {
+// 		Type e1Type = getExprType(expr->e1, proc_id);
+// 		Type e2Type = getExprType(expr->e2, proc_id);
 
-		// Compare and return expression type
-		if (e1Type == INT_TYPE && e2Type == INT_TYPE) {
-			return INT_TYPE;
-		}
-		else if ((e1Type == FLOAT_TYPE && e2Type == FLOAT_TYPE) || 
-			(e1Type == INT_TYPE && e2Type == FLOAT_TYPE) ||
-			(e1Type == FLOAT_TYPE && e2Type == INT_TYPE)) {
+// 		// Compare and return expression type
+// 		if (e1Type == INT_TYPE && e2Type == INT_TYPE) {
+// 			return INT_TYPE;
+// 		}
+// 		else if ((e1Type == FLOAT_TYPE && e2Type == FLOAT_TYPE) || 
+// 			(e1Type == INT_TYPE && e2Type == FLOAT_TYPE) ||
+// 			(e1Type == FLOAT_TYPE && e2Type == INT_TYPE)) {
 			
-			return FLOAT_TYPE;
-		}
-	}
+// 			return FLOAT_TYPE;
+// 		}
+// 	}
 	
-	return BOOL_TYPE;
-}
+// 	return BOOL_TYPE;
+// }
 
 static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
 
 	// TODO Check if e1 or e2 are expressions
+
 
 	switch(expr->kind) {
 		case EXPR_ID: {
@@ -253,8 +254,29 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			break;
 		case EXPR_BINOP: {
 			// evaluate expression
-			print_binop(expr, reg, proc_id);
-			return getExprType(expr, proc_id);
+			// print_binop(expr, reg, proc_id);
+			// return getExprType(expr, proc_id);
+
+			// Print label if while loop
+			if (stmt_type == 1) {
+				// Add label to branch to at top of loop
+				printf(":%s\n", label1);
+			}
+
+			reg = print_binop(expr->e1, reg, proc_id);
+			int reg1 = print_binop(expr->e2, reg+1, proc_id);
+			int ID_type = getExprType(expr->e1, proc_id);
+			int ID_type2 = getExprType(expr->e2, proc_id);
+			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
+
+			if (stmt_type == 0) {
+				printf("branch_on_false r%d %s\n", reg, label1);
+			}
+			else if (stmt_type == 1) {
+				// Branch away if false
+				printf("branch_on_false r%d %s\n", reg, label2);
+			}
+
 			break;
 		}
 		case EXPR_RELOP: {
@@ -264,9 +286,15 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 				printf(":%s\n", label1);
 			}
 
-			Type e1Type = print_cond(expr->e1, proc_id, reg, stmt_type, label1, label2);
-			reg++;
-			Type e2Type = print_cond(expr->e2, proc_id, reg, stmt_type, label1, label2);
+			int reg1 = print_binop(expr->e1, reg, proc_id);
+			int reg2 = print_binop(expr->e2, reg+1, proc_id);
+
+			Type e1Type = getExprType(expr->e1, proc_id);
+			Type e2Type = getExprType(expr->e2, proc_id);
+
+			// Type e1Type = print_cond(expr->e1, proc_id, reg, stmt_type, label1, label2);
+			// reg++;
+			// Type e2Type = print_cond(expr->e2, proc_id, reg, stmt_type, label1, label2);
 
 			Type evalType = -1;
 
@@ -284,70 +312,70 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 				evalType = BOOL_TYPE;
 			}
 
+			print_relop_string(expr->relop, reg1, reg2, e1Type, e2Type);
 
+			// // Check expression/var/const type
+			// switch(evalType) {
+			// 	case INT_TYPE:
+			// 		// check for RELOP type
+			// 		switch(expr->relop){
+			// 			case RELOP_EQ:
+			// 				printf("cmp_eq_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_NE:
+			// 				printf("cmp_ne_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LT:
+			// 				printf("cmp_lt_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GT:
+			// 				printf("cmp_gt_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LE:
+			// 				printf("cmp_le_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GE:
+			// 				printf("cmp_ge_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 		}
 
-			// Check expression/var/const type
-			switch(evalType) {
-				case INT_TYPE:
-					// check for RELOP type
-					switch(expr->relop){
-						case RELOP_EQ:
-							printf("cmp_eq_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_NE:
-							printf("cmp_ne_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_LT:
-							printf("cmp_lt_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_GT:
-							printf("cmp_gt_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_LE:
-							printf("cmp_le_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_GE:
-							printf("cmp_ge_int r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-					}
+			// 		break;
 
-					break;
+			// 	case FLOAT_TYPE:
 
-				case FLOAT_TYPE:
+			// 		// check for RELOP type
+			// 		switch(expr->relop){
+			// 			case RELOP_EQ:
+			// 				printf("cmp_eq_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_NE:
+			// 				printf("cmp_ne_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LT:
+			// 				printf("cmp_lt_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GT:
+			// 				printf("cmp_gt_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LE:
+			// 				printf("cmp_le_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GE:
+			// 				printf("cmp_ge_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 		}
 
-					// check for RELOP type
-					switch(expr->relop){
-						case RELOP_EQ:
-							printf("cmp_eq_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_NE:
-							printf("cmp_ne_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_LT:
-							printf("cmp_lt_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_GT:
-							printf("cmp_gt_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_LE:
-							printf("cmp_le_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-						case RELOP_GE:
-							printf("cmp_ge_real r%d r%d r%d\n", (reg-1), (reg-1), reg);
-							break;
-					}
-
-					break;
-				case BOOL_TYPE:
-					break;
-			}
+			// 		break;
+			// 	case BOOL_TYPE:
+			// 		break;
+			// }
 
 			if (stmt_type == 0) {
-				printf("branch_on_false r%d %s\n", (reg-1), label1);
+				printf("branch_on_false r%d %s\n", reg1, label1);
 			}
 			else if (stmt_type == 1) {
 				// Branch away if false
-				printf("branch_on_false r%d %s\n", (reg-1), label2);
+				printf("branch_on_false r%d %s\n", reg1, label2);
 			}
 
 			
@@ -372,36 +400,58 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 		case STMT_ASSIGN_ARRAY:
 			//print_assign_array(stmt->info.assign, l);
 			break;
-		case STMT_COND:
+		case STMT_COND:{
+
+			// Form label
+			char ifCountStr[15];
+			sprintf(ifCountStr, "%d", ifcount);
+			char str[80];
+			strcpy (str,"if_is_false_");
+			strcat (str,ifCountStr);
+
 			//print_cond(stmt->info.cond, l);
-			print_cond(stmt->info.cond.cond, proc_id, 0, 0, "if_is_false", "");
+			print_cond(stmt->info.cond.cond, proc_id, 0, 0, str, "");
 
 			// Print then statements
 			print_stmts(stmt->info.cond.then_branch, l, proc_id);
 
 			// Do False
-			printf(":if_is_false\n");
+			printf(":%s\n", str);
 
 			// Print else statements
 			if (stmt->info.cond.else_branch != NULL) {
 				print_stmts(stmt->info.cond.else_branch, l, proc_id);
 			}
+
+			ifcount++;
 			
 			break;
-		case STMT_WHILE:
+		}
+		case STMT_WHILE:{
+			char whileStr[15];
+			sprintf(whileStr, "%d", loopcount);
+			char top[80];
+			strcpy (top,"top_of_loop_");
+			strcat (top,whileStr);
+
+			char loopbreak[80];
+			strcpy (loopbreak,"loop_is_false_");
+			strcat (loopbreak,whileStr);
+
 			// print while condition
-			print_cond(stmt->info.loop.cond, proc_id, 0, 1, "top_of_loop", "loop_is_false");
+			print_cond(stmt->info.loop.cond, proc_id, 0, 1, top, loopbreak);
 
 			// Print statements
 			print_stmts(stmt->info.loop.body, l, proc_id);
 
 			// Print unconditional branch
-			printf("branch_uncond %s\n", "top_of_loop");
+			printf("branch_uncond %s\n", top);
 
 			// Print end loop label
-			printf(":loop_is_false\n");
+			printf(":%s\n", loopbreak);
 
 			break;
+		}
 		case STMT_READ:
 			print_read(stmt, l, proc_id);
 			break;		
@@ -800,7 +850,7 @@ static void print_exprs(Exprs exprs) {
 
 
 static void print_fncall(Stmt stmt, int l) {
-	print("# fncall\n");
+	printf("# fncall\n");
 	print_indent(l);
 	printf("call proc_%s\n", stmt->info.fncall.id);
 }
