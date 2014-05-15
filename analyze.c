@@ -9,25 +9,7 @@
 
 int slotNum = 0;
 int hasMain = 0;
-void analyze_procs(Procs);
-void analyze_proc(Proc);
-void analyze_head(Header);
-void analyze_params(Params, char*);
-void analyze_pram(Param, char*);
-void analyze_decls(Decls, char*);
-void analyze_decl(Decl, char*);
-void analyze_stmts(Stmts, char*);
-void analyze_stmt(Stmt, char*);
-void analyze_assign(Assign, char*);
-void analyze_assign_array(Assign, char*);
-void analyze_cond(Cond, char*);
-void analyze_while(While, char*);
-void analyze_read(Stmt, char*);
-void analyze_write(Stmt, char*);
-void analyze_read_array(Stmt, char*);
-void analyze_fncall(Stmt, char*);
-void analyze_expr(Expr, char*);
-Type getExprType(Expr, char*);
+
 
 void analyze(FILE *fp, Program prog)
 {
@@ -157,13 +139,16 @@ void analyze_assign(Assign assign, char* procName)
 {
 	analyze_expr(assign.expr, procName);
 	int r = checkType(procName, assign.id, getExprType(assign.expr, procName));
+	if(getType(procName,assign.id)==FLOAT_TYPE && getExprType(assign.expr, procName)==INT_TYPE)
+		r = 1;
+	//printf("%d,%d\n",getType( procName,assign.id), getExprType(assign.expr, procName));
 	if(r == 0)
 	{
-		printf("wrong assign type of %s in line %d.\n", assign.id, assign.expr->lineno);
+		printf("wrong assign type of %s.\n", assign.id);
 	}
 	if(r == -1)
 	{
-		printf("no declaration of %s in line %d.\n", assign.id, assign.expr->lineno);
+		printf("no declaration of %s.\n", assign.id);
 	}
 }
 
