@@ -38,7 +38,7 @@ static void print_procs(Procs procs) {
 }
 
 static void print_proc(Proc proc) {
-	printf("proc_%s", proc->header->id);
+	printf("proc_%s:", proc->header->id);
 	int stack_count = getStackSize(proc->header->id);
 	printf("\n");
 	//print_header(proc->header);
@@ -800,11 +800,9 @@ static void print_exprs(Exprs exprs) {
 
 
 static void print_fncall(Stmt stmt, int l) {
+	print("# fncall\n");
 	print_indent(l);
-	printf("%s", stmt->info.fncall.id);
-	printf("(");
-	print_exprs(stmt->info.fncall.args);
-	printf(");\n");
+	printf("call proc_%s\n", stmt->info.fncall.id);
 }
 
 static void print_constant(Constant constant, int reg) {

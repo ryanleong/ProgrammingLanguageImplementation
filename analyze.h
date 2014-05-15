@@ -4,3 +4,4 @@
 void analyze(FILE *, Program);
 
 
+Type getExprType(Expr, char*);
