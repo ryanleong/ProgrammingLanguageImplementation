@@ -70,7 +70,7 @@ void analyze_params(Params params, char* procName) {
 void analyze_pram(Param param, char* procName)
 {
 	char* varName = param->id;
-	if(addDecl(procName, varName, param->type, slotNum)==0)
+	if(addDecl(procName, varName, param->type, slotNum, 0)==0)
 		printf("duplicate parameter of %s in proc %s. \n", varName, procName);
 	else
 		slotNum++;
@@ -89,7 +89,7 @@ void analyze_decls(Decls decls, char* procName)
 void analyze_decl(Decl decl, char* procName)
 {
 	char* varName = decl->id;
-	if(addDecl(procName, varName, decl->type, slotNum)==0)
+	if(addDecl(procName, varName, decl->type, slotNum, 0)==0)
 		printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
 	else
 		slotNum++;

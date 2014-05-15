@@ -14,7 +14,7 @@ int addProc(char* procName);
 
 // Add new declaration
 // Return 1 if success, 0 if failed
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum);
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);
@@ -36,7 +36,15 @@ int getStackSize(char* procName);
 // Returns stack slot number (int)
 int getStackSlotNum(char* procName, char* varName);
 
+// Returns type of var
+// Returns -1 if var is not found
 Type getType(char* procName, char* varName);
+
+// Returns 1 if var is a reference
+// Returns 0 if var is a val
+// Returns -1 if var does not exist
+// Returns -2 if proc does not exist
+int isRef(char* procName, char* varName);
 
 // IGNORE THIS
 void test();

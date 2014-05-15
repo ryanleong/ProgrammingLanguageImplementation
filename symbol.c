@@ -16,12 +16,13 @@ struct declaration {
     char* name;
     Type type;
     int stackSlotNum;
+    int isRef;
     struct declaration *next;
 };
 
 struct proclist {
     char* procName;
-    struct declaration *firstDecl; 
+    struct declaration *firstDecl;
     struct proclist *nextProc;
 };
 
@@ -47,15 +48,17 @@ void test() {
     addProc("test");
     addProc("dsfdsf");
 
-    addDecl("main", "temp", INT_TYPE, 0);
-    addDecl("main", "temp", STRING_TYPE, 0);
-    addDecl("main", "tempd", INT_TYPE, 1);
-    addDecl("test", "d", BOOL_TYPE, 0);
+    addDecl("main", "temp", INT_TYPE, 0, 0);
+    addDecl("main", "temp", STRING_TYPE, 0, 1);
+    addDecl("main", "tempd", INT_TYPE, 1, 1);
+    addDecl("test", "d", BOOL_TYPE, 0, 1);
     
 
-    printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
-    printf("Stack Size of main: %d\n", getStackSize("main"));
-    printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
+    // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
+    // printf("Stack Size of main: %d\n", getStackSize("main"));
+    // printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
+
+    printf("isRef: %d", isRef("test", "d"));
 
     //////////////////////////////////////////////////////
     // Print out everything
@@ -63,12 +66,13 @@ void test() {
     printf("\n");
     
     while(ListofProcs) {
-        printf("ProcName: %s", ListofProcs->procName);
+        printf("ProcName: %s\n", ListofProcs->procName);
 
+        printf("Variables:\n");
         Declaration *d = ListofProcs->firstDecl;
 
         while(d) {
-            printf(", VarName: %s, Type: %d", d->name, d->type);
+            printf("\tVarName: %s, Type: %d, isRef: %d\n", d->name, d->type, d->isRef);
             d = d->next;
         }
         
@@ -97,6 +101,39 @@ ProcList* findProc(char* procName) {
 
     return NULL;
 }
+
+int isRef(char* procName, char* varName) {
+	// If proc list is not empty
+	if (ListofProcs) {
+		// check if proc exist
+		ProcList *proc = findProc(procName);
+
+		if (proc) {
+
+			Declaration *r = proc->firstDecl;
+
+			while(r) {
+				// if reference exist
+				if (strcmp(r->name, varName) == 0) {
+					return r->isRef;
+				}
+
+				r = r->next;
+			}
+
+			// If reference does not exist
+			return -1;
+
+		} else {
+			// Proc does not exist
+			return -2;
+		}
+	}
+
+	// Proc list empty
+    return -2;
+}
+
 
 int addProc(char* procName) {
     if(ListofProcs) {
@@ -132,7 +169,7 @@ int addProc(char* procName) {
     return 1;
 }
 
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef) {
 
     if(ListofProcs) {
         // check if proc exist
@@ -143,6 +180,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum) {
             Declaration *d = (Declaration *) malloc(sizeof(Declaration));
             d->name = varName;
             d->type = varType;
+            d->isRef = isRef;
             d->stackSlotNum = stackSlotNum;
 
         	// place declaration at start of list
