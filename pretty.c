@@ -230,7 +230,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 	// Print label if while loop
 	if (stmt_type == 1) {
 		// Add label to branch to at top of loop
-		printf(":%s\n", label1);
+		printf("%s:\n", label1);
 	}
 
 	switch(expr->kind) {
@@ -251,7 +251,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 		}
 		case EXPR_CONST:
 
-			printf("string_const r%d, %s\n", reg, expr->constant.val.bool_val ? "true" : "false");
+			printf("int_const r%d, %d\n", reg, expr->constant.val.bool_val);
 
 			if (stmt_type == 0) {
 				printf("branch_on_false r%d, %s\n", reg, label1);
@@ -294,11 +294,6 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			break;
 		}
 		case EXPR_RELOP: {
-			// Print label if while loop
-			if (stmt_type == 1) {
-				// Add label to branch to at top of loop
-				printf(":%s\n", label1);
-			}
 
 			int reg1 = print_expr(expr->e1, reg, proc_id);
 			int reg2 = print_expr(expr->e2, reg+1, proc_id);
@@ -385,11 +380,11 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			// }
 
 			if (stmt_type == 0) {
-				printf("branch_on_false r%d %s\n", reg1, label1);
+				printf("branch_on_false r%d, %s\n", reg1, label1);
 			}
 			else if (stmt_type == 1) {
 				// Branch away if false
-				printf("branch_on_false r%d %s\n", reg1, label2);
+				printf("branch_on_false r%d, %s\n", reg1, label2);
 			}
 
 			
@@ -430,7 +425,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			print_stmts(stmt->info.cond.then_branch, l, proc_id);
 
 			// Do False
-			printf(":%s\n", str);
+			printf("%s:\n", str);
 
 			// Print else statements
 			if (stmt->info.cond.else_branch != NULL) {
@@ -463,7 +458,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			printf("branch_uncond %s\n", top);
 
 			// Print end loop label
-			printf(":%s\n", loopbreak);
+			printf("%s:\n", loopbreak);
 			printf("\n");
 
 			loopcount++;
