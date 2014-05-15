@@ -42,7 +42,8 @@ static void print_proc(Proc proc) {
 	int stack_count = getStackSize(proc->header->id);
 	printf("\n");
 	//print_header(proc->header);
-	if (proc->decls) {
+
+	if (proc->decls||proc->header->params) {
 		//Get the number of declarations.
 		printf("push_stack_frame %d", stack_count);
 		printf("\n");
@@ -53,7 +54,10 @@ static void print_proc(Proc proc) {
 		printf("string_const r2, \"false\"");
 		printf("\n");
 		//Can get from tree?
-		print_decls(proc->decls, 1, proc->header->id);
+		if(proc->header->params)
+			print_params(proc->header->params,proc->header->id);
+		if(proc->decls)
+			print_decls(proc->decls, 1, proc->header->id);
 	}
 	printf("\n");
 	if (proc->body) {
@@ -63,13 +67,6 @@ static void print_proc(Proc proc) {
 
 }
 
-static void print_header(Header header) {
-	printf("%s (", header->id);
-	if (header->params) {
-		print_params(header->params);
-	}
-	printf(")\n");
-}
 
 static void print_decls(Decls decls, int l, char* proc_id) {
 	Decl first = decls->first;
@@ -85,39 +82,40 @@ static void print_decls(Decls decls, int l, char* proc_id) {
 
 
 
-static void print_params(Params params) {
+static void print_params(Params params, char* procName) {
 	Param first = params->first;
 	Params rest = params->rest;
 	if (first) {
-		print_pram(first);
+		print_pram(first, procName);
 		if (rest) {
-            printf(", ");
-			print_params(rest);
+			print_params(rest, procName);
 		}
 	}
-
 }
 
-static void print_pram(Param param) {
-	switch (param->kind) {
-		case REF:
-			printf("ref ");
-			break;
-		case VAL:
-			printf("val ");
-			break;
+static void print_pram(Param param, char* procName) {
+	int slot;
+	slot = getStackSlotNum(procName, param->id);
+	if(param->kind == REF)
+	{
+		//***************
 	}
-
-	switch (param->type) {
-		case INT_PARAM:
-			printf("int ");
-			break;
-		case FLOAT_PARAM:
-			printf("float ");
-			break;
-		case BOOL_PARAM:
-			printf("bool ");
-			break;
+	else if(param->kind == VAL)
+	{
+		switch (param->type) {
+			case INT_PARAM:
+				printf("store %d, r0", slot);
+				printf("\n");
+				break;
+			case FLOAT_PARAM:
+				printf("store %d, r1", slot);
+				printf("\n");
+				break;
+			case BOOL_PARAM:
+				printf("store %d, r2", slot);
+				printf("\n");
+				break;
+		}
 	}
 	printf("%s", param->id);
 }
@@ -800,7 +798,7 @@ static void print_exprs(Exprs exprs) {
 
 
 static void print_fncall(Stmt stmt, int l) {
-	print("# fncall\n");
+	printf("# fncall\n");
 	print_indent(l);
 	printf("call proc_%s\n", stmt->info.fncall.id);
 }
