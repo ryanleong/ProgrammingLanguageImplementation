@@ -21,6 +21,9 @@ int ifcount = 0;
 
 void pretty_prog(FILE *fp, Program prog) {
 	Procs sorted_procs = sort_procs(prog->procs);
+	printf("call proc_main\n");
+	printf("halt\n");
+	printf("\n");
 	print_procs(sorted_procs);
 }
 
@@ -42,7 +45,7 @@ static void print_proc(Proc proc) {
 	int stack_count = getStackSize(proc->header->id);
 	printf("\n");
 	//print_header(proc->header);
-
+	printf("#prologue\n");
 	if (proc->decls||proc->header->params) {
 		//Get the number of declarations.
 		printf("push_stack_frame %d", stack_count);
@@ -224,17 +227,39 @@ static void print_stmts(Stmts stmts, int l, char* proc_id) {
 static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
 
 	// TODO Check if e1 or e2 are expressions
-
+	// Print label if while loop
+	if (stmt_type == 1) {
+		// Add label to branch to at top of loop
+		printf(":%s\n", label1);
+	}
 
 	switch(expr->kind) {
 		case EXPR_ID: {
 			Type exprType = getType(proc_id,expr->id);
-			printf("load r%d %d\n", reg, exprType);
+			printf("load r%d, %d\n", reg, exprType);
+
+			if (stmt_type == 0) {
+				printf("branch_on_false r%d, %s\n", reg, label1);
+			}
+			else if (stmt_type == 1) {
+				// Branch away if false
+				printf("branch_on_false r%d, %s\n", reg, label2);
+			}
+
 			return exprType;
 			break;
 		}
 		case EXPR_CONST:
-			printf("load r%d %d\n", reg, expr->constant.val.int_val);
+
+			printf("string_const r%d, %s\n", reg, expr->constant.val.bool_val ? "true" : "false");
+
+			if (stmt_type == 0) {
+				printf("branch_on_false r%d, %s\n", reg, label1);
+			}
+			else if (stmt_type == 1) {
+				// Branch away if false
+				printf("branch_on_false r%d, %s\n", reg, label2);
+			}
 
 			switch(expr->constant.type){
 				case INT_CONSTANT:
@@ -250,15 +275,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 
 			break;
 		case EXPR_BINOP: {
-			// evaluate expression
-			// print_expr(expr, reg, proc_id);
-			// return getExprType(expr, proc_id);
 
-			// Print label if while loop
-			if (stmt_type == 1) {
-				// Add label to branch to at top of loop
-				printf(":%s\n", label1);
-			}
 
 			reg = print_expr(expr->e1, reg, proc_id);
 			int reg1 = print_expr(expr->e2, reg+1, proc_id);
@@ -267,11 +284,11 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
 
 			if (stmt_type == 0) {
-				printf("branch_on_false r%d %s\n", reg, label1);
+				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
 				// Branch away if false
-				printf("branch_on_false r%d %s\n", reg, label2);
+				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
 			break;
@@ -376,11 +393,11 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			}
 
 			
-
+		
 			break; 
 		}
 	}
-
+	printf("\n");
 	return -1;
 }
 
@@ -398,14 +415,14 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			//print_assign_array(stmt->info.assign, l);
 			break;
 		case STMT_COND:{
-
+			printf("#if\n");
 			// Form label
 			char ifCountStr[15];
 			sprintf(ifCountStr, "%d", ifcount);
 			char str[80];
 			strcpy (str,"if_is_false_");
 			strcat (str,ifCountStr);
-
+			
 			//print_cond(stmt->info.cond, l);
 			print_cond(stmt->info.cond.cond, proc_id, 0, 0, str, "");
 
@@ -419,12 +436,13 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			if (stmt->info.cond.else_branch != NULL) {
 				print_stmts(stmt->info.cond.else_branch, l, proc_id);
 			}
-
-			ifcount++;
 			
+			ifcount++;
+			printf("\n");
 			break;
 		}
 		case STMT_WHILE:{
+			printf("#while\n");
 			char whileStr[15];
 			sprintf(whileStr, "%d", loopcount);
 			char top[80];
@@ -446,7 +464,9 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 
 			// Print end loop label
 			printf(":%s\n", loopbreak);
+			printf("\n");
 
+			loopcount++;
 			break;
 		}
 		case STMT_READ:
@@ -471,22 +491,31 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 	int slot;
 	ID_type = getType(proc_id,assign.id);
 	expr_type = getExprType(assign.expr, proc_id);
-	if (ID_type != expr_type){
-		printf("Illegal assignment\n"); //Put in proper error
-	}
-	else{
+	if (ID_type == 2 && expr_type == 1){
 		slot = getStackSlotNum(proc_id, assign.id);
 		printf("#assignment\n");
 		print_expr(assign.expr, 0, proc_id);
+		printf("int_to_real r0, r0\n");
 		printf("store %d, r0\n", slot);
-		}
-	printf("\n");
+		printf("\n");
+	}
+	
+	else if ((ID_type == 1 && expr_type == 1) ||
+		(ID_type == 2 && expr_type == 2)) {
+		slot = getStackSlotNum(proc_id, assign.id);	
+		printf("#assignment\n");
+		print_expr(assign.expr, 0, proc_id);
+		printf("store %d, r0\n", slot);
+		printf("\n");
+	}
+	
 }
 
 static void print_read(Stmt stmt, int l, char* proc_id) {
-	//print_indent(l);
+	
 	printf("#read");
 	printf("\n");
+	print_indent(l);
 	//Get the type and stack number from the id
 	Type ID_type;
 	int stackNo;
@@ -497,20 +526,23 @@ static void print_read(Stmt stmt, int l, char* proc_id) {
 		//printf("bool %s;\n", decl->id);
 			printf("call_builtin read_bool"); //with a function
 			printf("\n");
+			print_indent(l);
 			printf("store %d, r0", stackNo);
 			printf("\n");
 			break;
 		case INT_TYPE:
 			printf("call_builtin read_int \n"); //with a function
+			print_indent(l);
 			printf("store %d, r0 \n", stackNo);
 			break;
 		case FLOAT_TYPE:
 			printf("call_builtin read_real \n"); //with a function
+			print_indent(l);
 			printf("store %d, r0 \n", stackNo);
 			break; 
 	}
 	//printf("read %s", stmt->info.read);
-	//printf(";\n");
+	printf("\n");
 }
 
 static void print_read_array(Stmt stmt, int l) {
@@ -605,44 +637,50 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 
 void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2){
 	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
+	if (ID1 == 1 && ID2 == 2){
+		printf("int_to_real r%d, r%d\n", curr_reg, curr_reg);
+		}
+	else if (ID1 == 2 && ID2 == 1){
+		printf("int_to_real r%d, r%d\n", next_reg, next_reg);
+		}	
 	switch(binop){
 		case BINOP_ADD:
-			if (ID >= 3){ 
-				printf("add_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			if (ID >= 3){
+				printf("add_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 			}
 			else{
-				printf("add_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("add_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 			}
 			break;
 		case BINOP_SUB:
 			if (ID >= 3){
-				printf("sub_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("sub_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
-				printf("sub_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("sub_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 			}
 			break;
 		case BINOP_MUL:
 			if (ID >= 3){
-				printf("mul_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("mul_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
-				printf("mul_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("mul_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			break;
 		case BINOP_DIV:
 			if (ID >= 3){
-				printf("div_real r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("div_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			else{
-				printf("div_int r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+				printf("div_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 				}
 			break;
 		case BINOP_AND:
-			printf("and r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			printf("and r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 			break;
 		case BINOP_OR:
-			printf("or r%d r%d r%d \n", curr_reg, curr_reg, next_reg);
+			printf("or r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
 			break;		
 	}
 }
@@ -710,7 +748,6 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 		case EXPR_BINOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
-			
 			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
 			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
@@ -734,44 +771,50 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 
 void print_relop_string(int relop, int curr_reg, int next_reg, int ID1, int ID2){
 	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
+	if (ID1 == 1 && ID2 == 2){
+		printf("int_to_real r%d, r%d\n", curr_reg, curr_reg);
+		}
+	else if (ID1 == 2 && ID2 == 1){
+		printf("int_to_real r%d, r%d\n", next_reg, next_reg);
+		}
 	switch(relop){
 		case RELOP_EQ:
 			if (ID >= 3){
-				printf("cmp_eq_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);
+				printf("cmp_eq_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
 			}
 			else{
-				printf("cmp_eq_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);
+				printf("cmp_eq_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
 			}
 			break;
 		case RELOP_NE:
 			if (ID >= 3){
-				printf("cmp_ne_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_ne_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			else{
-				printf("cmp_ne_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_ne_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			break;
 		case RELOP_LT:
 			if (ID >= 3){
-				printf("cmp_lt_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_lt_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			else{
-				printf("cmp_lt_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_lt_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			break;
 		case RELOP_GT:
 			if (ID >= 3){
-				printf("cmp_gt_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_gt_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			else{
-				printf("cmp_gt_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_gt_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			break;
 		case RELOP_LE:
 			if (ID >= 3){
-				printf("cmp_le_real r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_le_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			else{
-				printf("cmp_le_int r%d r%d r%d\n", curr_reg, curr_reg, next_reg);}
+				printf("cmp_le_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
 			break;
 		case RELOP_GE:
 			if (ID >= 3){
-				printf("cmp_ge_real r%d r%d r%d\n",curr_reg, curr_reg, next_reg);}
+				printf("cmp_ge_real r%d, r%d, r%d\n",curr_reg, curr_reg, next_reg);}
 			else{
-				printf("cmp_ge_int r%d r%d r%d\n",curr_reg, curr_reg, next_reg);}
+				printf("cmp_ge_int r%d, r%d, r%d\n",curr_reg, curr_reg, next_reg);}
 			break;
 	}
 }
@@ -781,12 +824,12 @@ void print_unop_string(int unop, int reg, int ID){
 		case UNOP_MINUS:
 			if (ID == 2){
 				printf("real_const r%d, -1\n", reg+1);
-				printf("mul_real r%d r%d r%d \n", reg, reg, reg+1);
+				printf("mul_real r%d, r%d, r%d \n", reg, reg, reg+1);
 			}
 			
 			else{
 				printf("int_const r%d, -1\n", reg+1);
-				printf("mul_int r%d r%d r%d \n", reg, reg, reg+1);
+				printf("mul_int r%d, r%d, r%d \n", reg, reg, reg+1);
 			}
 			break;
 		case UNOP_NOT:
