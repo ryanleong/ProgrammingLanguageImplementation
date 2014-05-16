@@ -5,26 +5,11 @@
 #include "ast.h"
 #include "std.h"
 #include "symbol.h"
+#include "analyze.h"
 
 int slotNum = 0;
 int hasMain = 0;
-void analyze_procs(Procs);
-void analyze_proc(Proc);
-void analyze_head(char*);
-void analyze_decls(Decls, char*);
-void analyze_decl(Decl, char*);
-void analyze_stmts(Stmts, char*);
-void analyze_stmt(Stmt, char*);
-void analyze_assign(Assign, char*);
-void analyze_assign_array(Assign, char*);
-void analyze_cond(Cond, char*);
-void analyze_while(While, char*);
-void analyze_read(Stmt, char*);
-void analyze_write(Stmt, char*);
-void analyze_read_array(Stmt, char*);
-void analyze_fncall(Stmt, char*);
-void analyze_expr(Expr, char*);
-Type getExprType(Expr, char*);
+
 
 void analyze(FILE *fp, Program prog)
 {
@@ -51,7 +36,8 @@ void analyze_procs(Procs procs)
 
 void analyze_proc(Proc proc)
 {
-	analyze_head(proc->header->id);
+	analyze_head(proc->header);
+
 	if(proc->decls)
 		analyze_decls(proc->decls, proc->header->id);
 	if(proc->body){
@@ -59,13 +45,35 @@ void analyze_proc(Proc proc)
 	}
 }
 
-void analyze_head(char* procName)
+void analyze_head(Header header)
 {
+	char* procName = header->id;
     if(addProc(procName) == 0){
     	printf("duplicate procedure name \"%s\"\n", procName);
     }
+    else if(header->params)
+    	analyze_params(header->params, procName);
     if(strcmp(procName, "main") == 0)
     	hasMain = 1;
+}
+
+void analyze_params(Params params, char* procName) {
+	Param first = params->first;
+	Params rest = params->rest;
+	if (first) {
+		analyze_pram(first, procName);
+		if (rest) {
+            analyze_params(rest, procName);
+		}
+	}
+}
+void analyze_pram(Param param, char* procName)
+{
+	char* varName = param->id;
+	if(addDecl(procName, varName, param->type, slotNum)==0)
+		printf("duplicate parameter of %s in proc %s. \n", varName, procName);
+	else
+		slotNum++;
 }
 
 void analyze_decls(Decls decls, char* procName)
@@ -131,13 +139,16 @@ void analyze_assign(Assign assign, char* procName)
 {
 	analyze_expr(assign.expr, procName);
 	int r = checkType(procName, assign.id, getExprType(assign.expr, procName));
+	if(getType(procName,assign.id)==FLOAT_TYPE && getExprType(assign.expr, procName)==INT_TYPE)
+		r = 1;
+	//printf("%d,%d\n",getType( procName,assign.id), getExprType(assign.expr, procName));
 	if(r == 0)
 	{
-		printf("wrong assign type of %s in line %d.\n", assign.id, assign.expr->lineno);
+		printf("wrong assign type of %s.\n", assign.id);
 	}
 	if(r == -1)
 	{
-		printf("no declaration of %s in line %d.\n", assign.id, assign.expr->lineno);
+		printf("no declaration of %s.\n", assign.id);
 	}
 }
 

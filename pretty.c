@@ -15,6 +15,7 @@
 #include "std.h"
 #include "codegen.h"
 #include "symbol.h"
+#include "analyze.h"
 
 int loopcount = 0;
 int ifcount = 0;
