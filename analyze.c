@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <string.h>
 #include "ast.h"
@@ -52,28 +50,39 @@ void analyze_head(Header header)
     	printf("duplicate procedure name \"%s\"\n", procName);
     }
     else if(header->params)
-    	analyze_params(header->params, procName);
+    	analyze_params(header->params, procName,0);
     if(strcmp(procName, "main") == 0)
     	hasMain = 1;
 }
 
-void analyze_params(Params params, char* procName) {
+void analyze_params(Params params, char* procName, int paramNum) {
 	Param first = params->first;
 	Params rest = params->rest;
 	if (first) {
-		analyze_pram(first, procName);
+		analyze_pram(first, procName,paramNum);
 		if (rest) {
-            analyze_params(rest, procName);
+            analyze_params(rest, procName,paramNum+1);
 		}
 	}
 }
-void analyze_pram(Param param, char* procName)
+void analyze_pram(Param param, char* procName, int paramNum)
 {
+
 	char* varName = param->id;
-	if(addDecl(procName, varName, param->type, slotNum,0)==0)
-		printf("duplicate parameter of %s in proc %s. \n", varName, procName);
-	else
-		slotNum++;
+	if(param->kind==VAL)
+	{
+		if(addDecl(procName, varName, param->type, slotNum,0, paramNum)==0)
+			printf("duplicate parameter of %s in proc %s. \n", varName, procName);
+		else
+			slotNum++;
+	}
+	else if(param->kind==REF)
+	{
+		if(addDecl(procName, varName, param->type, slotNum,1,paramNum)==0)
+			printf("duplicate parameter of %s in proc %s. \n", varName, procName);
+		else
+			slotNum++;
+	}
 }
 
 void analyze_decls(Decls decls, char* procName)
@@ -89,7 +98,7 @@ void analyze_decls(Decls decls, char* procName)
 void analyze_decl(Decl decl, char* procName)
 {
 	char* varName = decl->id;
-	if(addDecl(procName, varName, decl->type, slotNum,0)==0)
+	if(addDecl(procName, varName, decl->type, slotNum,0,-1)==0)
 		printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
 	else
 		slotNum++;
