@@ -265,8 +265,8 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 		case EXPR_BINOP: {
 
 
-			reg = print_expr(expr->e1, reg, proc_id,-1);
-			int reg1 = print_expr(expr->e2, reg+1, proc_id,-1);
+			reg = print_expr(expr->e1, reg, proc_id);
+			int reg1 = print_expr(expr->e2, reg+1, proc_id);
 			int ID_type = getExprType(expr->e1, proc_id);
 			int ID_type2 = getExprType(expr->e2, proc_id);
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
@@ -283,8 +283,8 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 		}
 		case EXPR_RELOP: {
 
-			int reg1 = print_expr(expr->e1, reg, proc_id,-1);
-			int reg2 = print_expr(expr->e2, reg+1, proc_id,-1);
+			int reg1 = print_expr(expr->e1, reg, proc_id);
+			int reg2 = print_expr(expr->e2, reg+1, proc_id);
 
 			Type e1Type = getExprType(expr->e1, proc_id);
 			Type e2Type = getExprType(expr->e2, proc_id);
@@ -498,7 +498,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 		if (ID_type == 2 && expr_type == 1){
 			slot = getStackSlotNum(proc_id, assign.id);
 			printf("#assignment\n");
-			print_expr(assign.expr, 0, proc_id,-1);
+			print_expr(assign.expr, 0, proc_id);
 			printf("int_to_real r0, r0\n");
 			printf("store %d, r0\n", slot);
 			printf("\n");
@@ -509,7 +509,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 			(ID_type == 0 && expr_type == 0)){
 			slot = getStackSlotNum(proc_id, assign.id);	
 			printf("#assignment\n");
-			print_expr(assign.expr, 0, proc_id,-1);
+			print_expr(assign.expr, 0, proc_id);
 			printf("store %d, r0\n", slot);
 			printf("\n");
 		}
@@ -518,7 +518,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
     	if (ID_type == 2 && expr_type == 1){
 			slot = getStackSlotNum(proc_id, assign.id);
 			printf("#assignment\n");
-			print_expr(assign.expr, 0, proc_id,-1);
+			print_expr(assign.expr, 0, proc_id);
 			printf("int_to_real r0, r0\n");
 			printf("load r1, %d\n", slot);
 			printf("store_indirect r1, r0\n");
@@ -530,7 +530,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 			(ID_type == 0 && expr_type == 0)){
 			slot = getStackSlotNum(proc_id, assign.id);	
 			printf("#assignment\n");
-			print_expr(assign.expr, 0, proc_id,-1);
+			print_expr(assign.expr, 0, proc_id);
 			printf("load r1, %d\n", slot);
 			printf("store_indirect r1, r0\n");
 			printf("\n");
@@ -624,8 +624,8 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			print_write_constant(expr->constant);
 			break;
 		case EXPR_BINOP:
-			reg = print_expr(expr->e1, 0, proc_id,-1);
-			reg1 = print_expr(expr->e2, 1, proc_id,-1);
+			reg = print_expr(expr->e1, 0, proc_id);
+			reg1 = print_expr(expr->e2, 1, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
@@ -640,15 +640,15 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			}
 			break;	
 		case EXPR_RELOP:
-			reg =  print_expr(expr->e1, 0, proc_id,-1);
-			reg1 = print_expr(expr->e2, 1, proc_id,-1);
+			reg =  print_expr(expr->e1, 0, proc_id);
+			reg1 = print_expr(expr->e2, 1, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			print_relop_string(expr->relop, reg, reg1, ID_type, ID_type2);
 			printf("call_builtin print_bool \n");
 			break;
 		case EXPR_UNOP:
-			reg =  print_expr(expr->e1, 0, proc_id,-1);
+			reg =  print_expr(expr->e1, 0, proc_id);
 			ID_type = getExprType(expr->e1, proc_id);
 			print_unop_string(expr->unop, reg, ID_type);
 			if (ID_type == 2){
@@ -746,7 +746,7 @@ static void print_write_constant(Constant constant) {
 	}
 }
 
-int print_expr(Expr expr, int reg, char* proc_id,int paramNum) {
+int print_expr(Expr expr, int reg, char* proc_id) {
 	int curr_reg = reg;
 	int next_reg;
 	int ID_type;
@@ -757,15 +757,7 @@ int print_expr(Expr expr, int reg, char* proc_id,int paramNum) {
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
-			printf("%d\n",paramNum);
-			if(isParamRef(proc_id,paramNum)==0){
-
-				printf("load r%d, %d\n", curr_reg,stackNo);
-			}
-			if(isParamRef(proc_id,paramNum)==1){
-
-				printf("load_address r%d, %d\n", curr_reg,stackNo);
-			}
+			printf("load r%d, %d\n", curr_reg,stackNo);
 			break;
 		case EXPR_CONST:
 			print_constant(expr->constant, curr_reg);
@@ -773,16 +765,16 @@ int print_expr(Expr expr, int reg, char* proc_id,int paramNum) {
 		case EXPR_BINOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id,-1);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id,-1);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_RELOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id,-1);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id,-1);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_UNOP:	
@@ -821,16 +813,16 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 		case EXPR_BINOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id,-1);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id,-1);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_RELOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id,-1);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id,-1);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_UNOP:	
@@ -918,13 +910,13 @@ static void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* c
 		}
 	}
 }
-static void print_exprs(Exprs exprs,int reg, char* procName, int paramNum) {
+static void print_exprs(Exprs exprs,int reg, char* procName) {
 	Expr first = exprs->first;
 	Exprs rest = exprs->rest;
 	if (first) {
-			print_expr(first,reg,procName,paramNum);
+			print_expr(first,reg,procName);
 		if (rest) {
-			print_exprs(rest,reg+1,procName,paramNum+1);	
+			print_exprs(rest,reg+1,procName);	
 		}
 	}
 }
