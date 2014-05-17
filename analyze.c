@@ -11,12 +11,27 @@ int errorNum = 0;
 
 int analyze(FILE *fp, Program prog)
 {
-	analyze_procs(prog->procs);
+	analyze_procHeads(prog->procs);
 	if(hasMain==0)
 	{
     	printf("No main procedure!\n");
     }
+    analyze_procs(prog->procs);
     return errorNum;
+}
+
+void analyze_procHeads(Procs procs)
+{
+	Proc first = procs->first;
+    Procs rest = procs->rest;
+    if(first)
+    {
+        analyze_head(first->header);
+    }
+    if(rest)
+    {
+        analyze_procHeads(rest);
+    }
 }
 
 void analyze_procs(Procs procs)
@@ -36,7 +51,9 @@ void analyze_procs(Procs procs)
 void analyze_proc(Proc proc)
 {
 	slotNum = 0;
-	analyze_head(proc->header);
+	if(proc->header->params)
+    	analyze_params(proc->header->params, proc->header->id,0);
+    
 	if(proc->decls)
 		analyze_decls(proc->decls, proc->header->id);
 	if(proc->body){
@@ -51,9 +68,7 @@ void analyze_head(Header header)
     	printf("duplicate procedure name \"%s\"\n", procName);
     	errorNum++;
     }
-    else if(header->params)
-    	analyze_params(header->params, procName,0);
-    if(strcmp(procName, "main") == 0)
+    if(strcmp(header->id, "main") == 0)
     	hasMain = 1;
 }
 
@@ -122,7 +137,7 @@ void analyze_decl(Decl decl, char* procName)
 			printf("lower bound greater than higher bound.\n");
 			errorNum++;
 		}
-		else if(addArray(procName, varName, decl->type, slotNum, size, dimension)==0){
+		else if(addArray(procName, varName, decl->type, slotNum, size, dimension, decl->intervals)==0){
 			printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
 			errorNum++;
 		}
@@ -140,7 +155,7 @@ int getArrDimension(Intervals intervals)
 		d++;
 		i = i->rest;
 	}
-	return i;
+	return d;
 }
 
 int getArrSize(Intervals intervals)
@@ -177,7 +192,7 @@ void analyze_stmt(Stmt stmt, char* procName)
 			analyze_assign(stmt->info.assign, procName);
 			break;		
 		case STMT_ASSIGN_ARRAY:
-			analyze_assign_array(stmt->info.assign, procName);
+			analyze_assign(stmt->info.assign, procName);
 			break;
 		case STMT_COND:
 			analyze_cond(stmt->info.cond, procName);
@@ -189,7 +204,7 @@ void analyze_stmt(Stmt stmt, char* procName)
 			analyze_read(stmt, procName);
 			break;		
 		case STMT_READ_ARRAY:
-			analyze_read_array(stmt, procName);
+			analyze_read(stmt, procName);
 			break;
 		case STMT_WRITE:
 			analyze_write(stmt, procName);
@@ -219,10 +234,6 @@ void analyze_assign(Assign assign, char* procName)
 	}
 }
 
-void analyze_assign_array(Assign assign, char* procName)
-{
-	//...
-}
 
 void analyze_cond(Cond cond_stmt, char* procName)
 {
@@ -260,10 +271,6 @@ void analyze_read(Stmt stmt, char* procName)
 	}
 }
 
-void analyze_read_array(Stmt stmt, char* procName)
-{
-	//...
-}
 
 void analyze_write(Stmt stmt, char* procName)
 {
@@ -326,9 +333,19 @@ void analyze_expr(Expr expr, char* procName)
 			analyze_expr(expr->e2, procName);
 			break;
 		case EXPR_ARRAY:
-			//...
+			analyze_exprs(expr->es,procName);
 			break;
 	}
+}
+
+void analyze_exprs(Exprs exprs, char* procName)
+{
+	Expr first = exprs->first;
+	Exprs rest = exprs->rest;
+	if(first)
+		analyze_expr(first, procName);
+	if(rest)
+		analyze_exprs(rest, procName);
 }
 
 Type getExprType(Expr expr, char* procName)
@@ -409,7 +426,7 @@ Type getExprType(Expr expr, char* procName)
 				exprType =  BOOL_TYPE;
 			break;
 		case EXPR_ARRAY:
-			//...
+			exprType = getType(procName, expr->id);
 			break;
 		}
 		if (exprType == ERROR_TYPE)
