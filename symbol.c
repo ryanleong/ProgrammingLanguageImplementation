@@ -45,21 +45,22 @@ void test() {
 //
 //    printf("%d\n", getType("getName", "93933"));
 
-    // addProc("main");
-    // addProc("test");
+    addProc("main");
+    addProc("test");
     // addProc("dsfdsf");
 
-    // addDecl("main", "temp", INT_TYPE, 0, 0, -1);
-    // addDecl("main", "temp", STRING_TYPE, 0, 1, -1);
-    // addDecl("main", "tempd", INT_TYPE, 1, 1, -1);
-    // addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
+    addDecl("main", "temp", INT_TYPE, 0, 0, 0);
+    addDecl("main", "temp", STRING_TYPE, 0, 1, 0);
+    addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
+    addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
     // printf("Stack Size of main: %d\n", getStackSize("main"));
     // printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
 
-    printf("isRef: %d", isRef("test", "d"));
+    printf("temp isParamRef: %d\n", isParamRef("main", 0));
+    printf("tempd isParamRef: %d\n", isParamRef("main", 1));
 
     //////////////////////////////////////////////////////
     // Print out everything
@@ -73,7 +74,7 @@ void test() {
         Declaration *d = ListofProcs->firstDecl;
 
         while(d) {
-            printf("\tVarName: %s, Type: %d, isRef: %d\n, paramNum: %d", d->name, d->type, d->isRef, d->paramNum);
+            printf("\tVarName: %s, Type: %d, isRef: %d, paramNum: %d\n", d->name, d->type, d->isRef, d->paramNum);
             d = d->next;
         }
         
@@ -101,6 +102,47 @@ ProcList* findProc(char* procName) {
     }
 
     return NULL;
+}
+
+int isParamRef(char* procName, int paramNum) {
+	// If proc list is not empty
+	if (ListofProcs) {
+		// check if proc exist
+		ProcList *proc = findProc(procName);
+
+		if (proc) {
+
+			Declaration *r = proc->firstDecl;
+
+			while(r) {
+
+				// if parameter exist
+				if (r->paramNum == paramNum) {
+
+					if(r->paramNum > -1) {
+						// return true
+						return 1;
+					}
+					else {
+						// return false
+						return 0;
+					}
+				}
+
+				r = r->next;
+			}
+
+			// If parameter does not exist
+			return -1;
+
+		} else {
+			// Proc does not exist
+			return -2;
+		}
+	}
+
+	// Proc list empty
+    return -2;
 }
 
 int isRef(char* procName, char* varName) {
@@ -194,6 +236,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
             	Declaration *dec = proc->firstDecl;
 
             	int isDeclared = 0;
+            	int paramNumUsed = 0;
 
             	// Insert declaration at end of list
                 while(dec) {
@@ -203,7 +246,12 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
                 		isDeclared = 1;
                 	}
 
-                    if (dec->next == NULL && isDeclared == 0) {
+                	// Check if param number is used
+                	if (dec->paramNum == paramNum) {
+                		paramNumUsed = 1;
+                	}
+
+                    if (dec->next == NULL && isDeclared == 0 && paramNumUsed == 0) {
                         dec->next = d;
                         return 1;
                     }
