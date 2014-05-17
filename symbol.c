@@ -60,7 +60,7 @@ void test() {
     addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
     addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
 
-    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 2);
+    //addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 2);
 
     printf("ArraySize: %d, arrayDimension: %d\n", getArraySize("main", "temp1"), getArrayDimension("main", "temp1"));
     
