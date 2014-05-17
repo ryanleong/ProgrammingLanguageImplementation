@@ -179,32 +179,29 @@ int isRef(char* procName, char* varName) {
 
 
 int addProc(char* procName) {
+
+	// Create new proc
+    ProcList *temp = (ProcList *) malloc(sizeof(ProcList));
+    temp->procName = procName;
+    temp->firstDecl = NULL;
+    temp->nextProc = NULL;
+
     if(ListofProcs) {
         // check if proc exist
         ProcList *proc = findProc(procName);
 
         if(proc) {
+        	free(temp);
         	return 0;
         }
         else {
-            // create new proc at end of list
-            ProcList *temp = (ProcList *) malloc(sizeof(ProcList));
-            temp->procName = procName;
-            temp->firstDecl = NULL;
-            temp->nextProc = NULL;
-
+            // place new proc at end of list
             LastProc->nextProc = temp;
             LastProc = temp;
         }
     }
     else {
-        // When proc list is empty
-        // create new proc
-        ProcList *temp = (ProcList *) malloc(sizeof(ProcList));
-        temp->procName = procName;
-        temp->firstDecl = NULL;
-        temp->nextProc = NULL;
-
+        // place proc in list if list is empty
         ListofProcs = temp;
         LastProc = temp;
     }
@@ -259,9 +256,13 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
                     dec = dec->next;
                 }
             }
+
+            // Free memory if not stored
+            free(d);
         }
 
     }
+
 
     // Failed when no procs exist
 	return 0;
