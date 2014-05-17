@@ -59,9 +59,9 @@ void test() {
     addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
     addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
 
-    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 1);
+    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 2);
 
-    printf("ArraySize: %d, arrayDimension: %d\n", getArraySize("main", "temp1"), getArrayDimension("main", "temp"));
+    printf("ArraySize: %d, arrayDimension: %d\n", getArraySize("main", "temp1"), getArrayDimension("main", "temp1"));
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
@@ -505,12 +505,12 @@ int getArrayDimension(char* procName, char* name){
 				// if declaration exist
 				if (strcmp(d->name, name) == 0) {
 					// Check if var is array
-					if (d->arraySize < 1 || d->arrayDimension < 1) {
-						return -1;
-					}
-					else {
+					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
 						// return stack slot number
 						return d->arrayDimension;	
+					}
+					else {
+						return -1;
 					}
 				}
 
@@ -540,13 +540,16 @@ int getArraySize(char* procName, char* name) {
 				// if declaration exist
 				if (strcmp(d->name, name) == 0) {
 
+					printf("TYPE: %d\n", d->type);
+
 					// Check if var is array
-					if (d->arraySize < 1 || d->arrayDimension < 1) {
-						return -1;
-					}
-					else {
+					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
 						// return stack slot number
 						return d->arraySize;	
+						
+					}
+					else {
+						return -1;
 					}
 					
 				}
@@ -576,7 +579,17 @@ int getStackSize(char* procName) {
 			int total = 0; 
 			
 			while (d) {
-				total++;
+
+				if(d->next == NULL) {
+					// if not array
+					if (d->type != INT_ARRAY_TYPE || d->type != FLOAT_ARRAY_TYPE || d->type != BOOL_ARRAY_TYPE) {
+						return d->stackSlotNum;
+					}
+					else {
+						return (d->stackSlotNum + d->arraySize);
+					}
+				}
+
 				d = d->next;
 			}
 			
