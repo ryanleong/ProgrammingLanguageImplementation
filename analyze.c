@@ -389,7 +389,7 @@ Type getExprType(Expr expr, char* procName)
 				exprType =  FLOAT_TYPE;
 			break;
 		case EXPR_UNOP:
-			if(expr->binop == UNOP_NOT)
+			if(expr->unop == UNOP_NOT)
 			{
 				if(getExprType(expr->e1, procName)==BOOL_TYPE)
 					exprType = BOOL_TYPE;

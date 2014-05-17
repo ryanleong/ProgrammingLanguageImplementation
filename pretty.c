@@ -130,21 +130,35 @@ static void print_decl(Decl decl, int l, char* proc_id) {
 			printf("store %d, r1", slot);
 			printf("\n");
 			break;
-		case INT_ARRAY_TYPE:
-			printf("int %s[", decl->id);
-			print_intervals(decl->intervals);
-			printf("];\n");
+		case INT_ARRAY_TYPE:{
+			// Get from tree
+			int i;
+			//printf("%d\n",getArraySize(proc_id, decl->id));
+			for (i = 0; i < getArraySize(proc_id, decl->id); i++){
+				printf("store %d, r0", slot);
+				printf("\n");
+				slot++;
+			}
 			break;
-		case FLOAT_ARRAY_TYPE:
-			printf("float %s[", decl->id);
-			print_intervals(decl->intervals);
-			printf("];\n");
+			}
+		case FLOAT_ARRAY_TYPE:{
+			int i;
+			for (i = 0; i < getArraySize(proc_id, decl->id); i++){
+				printf("store %d, r1", slot);
+				printf("\n");
+				slot++;
+			}	
 			break;	
-		case BOOL_ARRAY_TYPE:
-			printf("bool %s[", decl->id);
-			print_intervals(decl->intervals);
-			printf("];\n");
+			}
+		case BOOL_ARRAY_TYPE:{
+			int i;
+			for (i = 0; i < getArraySize(proc_id, decl->id); i++){
+				printf("store %d, r0", slot);
+				printf("\n");
+				slot++;
+			}
 			break;
+			}
 	}
 }
 
@@ -594,7 +608,7 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 		int ID_type = 0;
 		int ID_type2 = 0;
 		int stackNo;
-		int reg; // for Binop use
+		int reg;
 		int reg1;
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
@@ -660,6 +674,14 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			else{
 				printf("call_builtin print_bool \n");
 			}
+			break;
+		case EXPR_ARRAY:
+			/*printf("%s", expr->id);
+			printf("[");
+			print_exprs(expr->es);
+			printf("]");*/
+			calculate_offset(expr->es, 0, expr->id, proc_id);
+			break;		
 	}
 }
 
@@ -757,14 +779,7 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
-			if(isRef(proc_id,expr->id)==0){
-
-				printf("load r%d, %d\n", curr_reg,stackNo);
-			}
-			if(isRef(proc_id,expr->id)==1){
-				printf("load r%d, %d\n", curr_reg,stackNo);
-				printf("load_indirect r%d, r%d\n", curr_reg,curr_reg);
-			}
+			printf("load r%d, %d\n", curr_reg,stackNo);
 			break;
 		case EXPR_CONST:
 			print_constant(expr->constant, curr_reg);
@@ -788,9 +803,50 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 			ID_type = getExprType(expr->e1, proc_id);
 			print_unop_string(expr->unop, curr_reg, ID_type);
 			break;
-			
+		case EXPR_ARRAY:
+			/*printf("%s", expr->id);
+			printf("[");
+			print_exprs(expr->es);
+			printf("]");*/
+			calculate_offset(expr->es, curr_reg, expr->id, proc_id);
+			break;	
 			}
 	return curr_reg;		
+}
+
+int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
+	int stackNo;
+	int curr_reg = reg;
+	int next_reg = curr_reg+1;
+	int dimension;
+	int size;
+	Intervals array_interval;
+	stackNo = getStackSlotNum(proc_id, id);
+	print_exprs(expr, curr_reg, proc_id);
+	dimension = getArrayDimension(proc_id, id);
+	size = getArraySize(proc_id, id);
+	int bounds[size];
+	array_interval = getIntervals(proc_id, id);
+	int j = 0;
+	while (array_interval != NULL){
+		bounds[j] = array_interval->first->start;
+		j++;
+		bounds[j] = array_interval->first->end;
+		j++;
+		array_interval = array_interval->rest;
+	}
+	//printf("%d\n", bounds[0]);
+	int i = 0;
+	while (i < dimension*2){
+		printf("%d\n", bounds[i]);
+		i++;
+	}
+	
+	printf("sub_offset r%d, r%d, r%d\n", curr_reg, next_reg, curr_reg);
+	/*load_address r2, 4 # 
+	sub_offset r1, r2, r1 # 
+	store_indirect r1, r0 # 
+*/
 }
 
 int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
@@ -806,12 +862,11 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 			stackNo = getStackSlotNum(proc_id, expr->id);
 			//printf("%d\n",paramNum);
 			if(isParamRef(callee,paramNum)==0){
+
 				printf("load r%d, %d\n", curr_reg,stackNo);
-				if(getParamType(callee,paramNum)==FLOAT_TYPE && ID_type==INT_TYPE){
-					printf("int_to_real r%d, r%d\n", curr_reg,curr_reg);
-				}
 			}
 			if(isParamRef(callee,paramNum)==1){
+
 				printf("load_address r%d, %d\n", curr_reg,stackNo);
 			}
 			break;
@@ -821,16 +876,16 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 		case EXPR_BINOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
-			curr_reg = print_arg(expr->e1, curr_reg, proc_id, paramNum, callee);
-			next_reg = print_arg(expr->e2, curr_reg + 1, proc_id, paramNum, callee);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_RELOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_arg(expr->e1, curr_reg, proc_id, paramNum, callee);
-			next_reg = print_arg(expr->e2, curr_reg + 1, proc_id, paramNum, callee);
+			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
+			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
 			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_UNOP:	
@@ -902,7 +957,10 @@ void print_unop_string(int unop, int reg, int ID){
 		case UNOP_NOT:
 			printf("not r%d, r%d\n", reg, reg);
 			break;
+	
 	}
+
+
 }
 
 static void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* callee) {
