@@ -292,7 +292,7 @@ void analyze_args(Exprs args, char* procName, char* callee)
 		analyze_expr(first, procName);
 		analyze_arg(first, callee);
 	}
-	else (rest)
+	else if(rest)
 		analyze_args(rest, procName, callee);
 
 }
