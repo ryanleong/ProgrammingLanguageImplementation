@@ -46,5 +46,12 @@ Type getType(char* procName, char* varName);
 // Returns -2 if proc does not exist
 int isRef(char* procName, char* varName);
 
+// Returns 1 if param is a reference
+// Returns 0 if param is a val
+// Returns -1 if param does not exist
+// Returns -2 if proc does not exist
+// USED FOR CALLING PROCS
+int isParamRef(char* procName, int paramNum);
+
 // IGNORE THIS
 void test();
