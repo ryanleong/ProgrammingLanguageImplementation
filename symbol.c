@@ -18,6 +18,7 @@ struct declaration {
     int stackSlotNum;
     int isRef;
     int paramNum;
+    int arraySize;
     struct declaration *next;
 };
 
@@ -53,14 +54,16 @@ void test() {
     addDecl("main", "temp", STRING_TYPE, 0, 1, 0);
     addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
     addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
+
+    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5);
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
     // printf("Stack Size of main: %d\n", getStackSize("main"));
     // printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
 
-    printf("temp isParamRef: %d\n", isParamRef("main", 0));
-    printf("tempd isParamRef: %d\n", isParamRef("main", 1));
+    // printf("temp isParamRef: %d\n", isParamRef("main", 0));
+    // printf("tempd isParamRef: %d\n", isParamRef("main", 1));
 
     //////////////////////////////////////////////////////
     // Print out everything
@@ -74,7 +77,14 @@ void test() {
         Declaration *d = ListofProcs->firstDecl;
 
         while(d) {
-            printf("\tVarName: %s, Type: %d, isRef: %d, paramNum: %d\n", d->name, d->type, d->isRef, d->paramNum);
+        	if(d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
+        		printf("\tVarName: %s, Type: %d, size: %d\n", d->name, d->type, d->arraySize);
+        	}
+        	else {
+        		printf("\tVarName: %s, Type: %d, isRef: %d, paramNum: %d\n", d->name, d->type, d->isRef, d->paramNum);	
+        	}
+
+            
             d = d->next;
         }
         
@@ -249,6 +259,58 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
                 	}
 
                     if (dec->next == NULL && isDeclared == 0 && paramNumUsed == 0) {
+                        dec->next = d;
+                        return 1;
+                    }
+
+                    dec = dec->next;
+                }
+            }
+
+            // Free memory if not stored
+            free(d);
+        }
+
+    }
+
+
+    // Failed when no procs exist
+	return 0;
+}
+
+
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize) {
+    if(ListofProcs) {
+        // check if proc exist
+        ProcList *proc = findProc(procName);
+
+        if(proc) {
+            // add declaration
+            Declaration *d = (Declaration *) malloc(sizeof(Declaration));
+            d->name = arrayName;
+            d->type = type;
+            d->arraySize = arraySize;
+            d->stackSlotNum = stackSlotNum;
+
+        	// place declaration at start of list
+            if (proc->firstDecl == NULL) {
+            	proc->firstDecl = d;
+                return 1;
+			}
+            else {
+            	Declaration *dec = proc->firstDecl;
+
+            	int isDeclared = 0;
+
+            	// Insert declaration at end of list
+                while(dec) {
+
+                	// Check if exist
+                	if(strcmp(dec->name, arrayName) == 0) {
+                		isDeclared = 1;
+                	}
+
+                    if (dec->next == NULL && isDeclared == 0) {
                         dec->next = d;
                         return 1;
                     }

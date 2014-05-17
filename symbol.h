@@ -16,6 +16,10 @@ int addProc(char* procName);
 // Return 1 if success, 0 if failed
 int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum);
 
+// Add new array
+// Return 1 if success, 0 if failed
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize);
+
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);
 
