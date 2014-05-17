@@ -127,7 +127,7 @@ void analyze_decl(Decl decl, char* procName)
 			errorNum++;
 		}
 		else
-			slotNum++;
+			slotNum = slotNum + size;
 	}
 }
 
