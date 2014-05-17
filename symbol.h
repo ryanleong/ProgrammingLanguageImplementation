@@ -14,7 +14,7 @@ int addProc(char* procName);
 
 // Add new declaration
 // Return 1 if success, 0 if failed
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef);
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);

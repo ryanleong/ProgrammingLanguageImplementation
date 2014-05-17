@@ -17,6 +17,7 @@ struct declaration {
     Type type;
     int stackSlotNum;
     int isRef;
+    int paramNum;
     struct declaration *next;
 };
 
@@ -44,14 +45,14 @@ void test() {
 //
 //    printf("%d\n", getType("getName", "93933"));
 
-    addProc("main");
-    addProc("test");
-    addProc("dsfdsf");
+    // addProc("main");
+    // addProc("test");
+    // addProc("dsfdsf");
 
-    addDecl("main", "temp", INT_TYPE, 0, 0);
-    addDecl("main", "temp", STRING_TYPE, 0, 1);
-    addDecl("main", "tempd", INT_TYPE, 1, 1);
-    addDecl("test", "d", BOOL_TYPE, 0, 1);
+    // addDecl("main", "temp", INT_TYPE, 0, 0, -1);
+    // addDecl("main", "temp", STRING_TYPE, 0, 1, -1);
+    // addDecl("main", "tempd", INT_TYPE, 1, 1, -1);
+    // addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
@@ -72,7 +73,7 @@ void test() {
         Declaration *d = ListofProcs->firstDecl;
 
         while(d) {
-            printf("\tVarName: %s, Type: %d, isRef: %d\n", d->name, d->type, d->isRef);
+            printf("\tVarName: %s, Type: %d, isRef: %d\n, paramNum: %d", d->name, d->type, d->isRef, d->paramNum);
             d = d->next;
         }
         
@@ -169,7 +170,7 @@ int addProc(char* procName) {
     return 1;
 }
 
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef) {
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum) {
 
     if(ListofProcs) {
         // check if proc exist
@@ -181,6 +182,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
             d->name = varName;
             d->type = varType;
             d->isRef = isRef;
+            d->paramNum = paramNum;
             d->stackSlotNum = stackSlotNum;
 
         	// place declaration at start of list
