@@ -1,7 +1,7 @@
 #include "std.h"
 #include "ast.h"
 
-void analyze(FILE *, Program);
+int analyze(FILE *, Program);
 
 
 Type getExprType(Expr, char*);
@@ -24,3 +24,7 @@ void analyze_read_array(Stmt, char*);
 void analyze_fncall(Stmt, char*);
 void analyze_expr(Expr, char*);
 Type getExprType(Expr, char*);
+int getArrayDimension(Intervals);
+int getArraySize(Intervals);
+void analyze_args(Exprs, char*, char*);
+void analyze_arg(Expr, char*);

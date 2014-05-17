@@ -7,15 +7,16 @@
 
 int slotNum = 0;
 int hasMain = 0;
+int errorNum = 0;
 
-
-void analyze(FILE *fp, Program prog)
+int analyze(FILE *fp, Program prog)
 {
 	analyze_procs(prog->procs);
 	if(hasMain==0)
 	{
     	printf("No main procedure!\n");
     }
+    return errorNum;
 }
 
 void analyze_procs(Procs procs)
@@ -48,6 +49,7 @@ void analyze_head(Header header)
 	char* procName = header->id;
     if(addProc(procName) == 0){
     	printf("duplicate procedure name \"%s\"\n", procName);
+    	errorNum++;
     }
     else if(header->params)
     	analyze_params(header->params, procName,0);
@@ -71,15 +73,19 @@ void analyze_pram(Param param, char* procName, int paramNum)
 	char* varName = param->id;
 	if(param->kind==VAL)
 	{
-		if(addDecl(procName, varName, param->type, slotNum,0, paramNum)==0)
+		if(addDecl(procName, varName, param->type, slotNum,0, paramNum)==0){
 			printf("duplicate parameter of %s in proc %s. \n", varName, procName);
+			errorNum++;
+		}
 		else
 			slotNum++;
 	}
 	else if(param->kind==REF)
 	{
-		if(addDecl(procName, varName, param->type, slotNum,1,paramNum)==0)
+		if(addDecl(procName, varName, param->type, slotNum,1,paramNum)==0){
 			printf("duplicate parameter of %s in proc %s. \n", varName, procName);
+			errorNum++;
+		}
 		else
 			slotNum++;
 	}
@@ -98,10 +104,60 @@ void analyze_decls(Decls decls, char* procName)
 void analyze_decl(Decl decl, char* procName)
 {
 	char* varName = decl->id;
-	if(addDecl(procName, varName, decl->type, slotNum,0,-1)==0)
-		printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
-	else
-		slotNum++;
+	if(!decl->intervals)
+	{
+		if(addDecl(procName, varName, decl->type, slotNum,0,-1)==0){
+			printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
+			errorNum++;
+		}
+		else
+			slotNum++;
+	}
+	else if(decl->intervals)
+	{
+		int size = getArraySize(intervals);
+		int dimension = getArrayDimension(intervals);
+		if(size == -1)
+		{
+			printf("lower bound greater than higher bound.\n");
+			errorNum++;
+		}
+		else if(addArray(procName, varName, decl->type, slotNum, size, dimension)==0){
+			printf("duplicate declaration of %s in line %d. \n", varName, decl->lineno);
+			errorNum++;
+		}
+		else
+			slotNum++;
+	}
+}
+
+int getArrayDimension(Intervals intervals)
+{
+	int d = 0;
+	Intervals i = intervals;
+	while(i)
+	{
+		d++;
+		i = i->rest;
+	}
+	return i;
+}
+
+int getArraySize(Intervals intervals)
+{
+	int s = 0;
+	Intervals i = intervals;
+	while(i)
+	{
+		if(i->first->start > i->first->end)
+		{
+			return -1;
+		}
+		else
+			s = s + i->first->end - i->first->start + 1;
+		i = i->rest;
+	}
+	return s;
 }
 
 void analyze_stmts(Stmts stmts, char* procName)
@@ -154,10 +210,12 @@ void analyze_assign(Assign assign, char* procName)
 	if(r == 0)
 	{
 		printf("wrong assign type of %s.\n", assign.id);
+		errorNum++;
 	}
 	if(r == -1)
 	{
 		printf("no declaration of %s.\n", assign.id);
+		errorNum++;
 	}
 }
 
@@ -172,6 +230,7 @@ void analyze_cond(Cond cond_stmt, char* procName)
 	if(getExprType(cond_stmt.cond, procName)!=BOOL_TYPE)
 	{
 		printf("condition expression type is not bool in line %d.\n", cond_stmt.cond->lineno);
+		errorNum++;
 	}
 	analyze_stmts(cond_stmt.then_branch, procName);
 	if (cond_stmt.else_branch) {
@@ -185,6 +244,7 @@ void analyze_while(While while_stmt, char* procName)
 	if(getExprType(while_stmt.cond, procName)!=BOOL_TYPE)
 	{
 		printf("condition expression type is not bool in line %d.\n", while_stmt.cond->lineno);
+		errorNum++;
 	}
 	if(while_stmt.body){
 		analyze_stmts(while_stmt.body, procName);
@@ -196,6 +256,7 @@ void analyze_read(Stmt stmt, char* procName)
 	if(inDeclared(procName, stmt->info.read) != 1)
 	{
 		printf("no declaration of %s in line %d.\n", stmt->info.read, stmt->lineno);
+		errorNum++;
 	}
 }
 
@@ -211,7 +272,34 @@ void analyze_write(Stmt stmt, char* procName)
 
 void analyze_fncall(Stmt stmt, char* procName)
 {
-	//...
+	if(procExist(stmt->info.fncall.id)==0)
+	{
+		printf("function %s dosen't exist.\n", stmt->info.fncall.id);
+		errorNum++;
+	}
+	else if(stmt->info.fncall.args)
+	{
+		analyze_args(stmt->info.fncall.args, procName, stmt->info.fncall.id);
+	}
+}
+
+void analyze_args(Exprs args, char* procName, char* callee)
+{
+	Expr first = args->first;
+	Exprs rest = args->rest；
+	if(first)
+	{
+		analyze_expr(first, procName);
+		analyze_arg(first, callee);
+	}
+	else (rest)
+		analyze_args(rest, procName, callee);
+
+}
+
+void analyze_arg(Expr arg, char* callee)
+{
+	//////////////////////
 }
 
 void analyze_expr(Expr expr, char* procName)
@@ -221,6 +309,7 @@ void analyze_expr(Expr expr, char* procName)
 			if(inDeclared(procName, expr->id) != 1)
 			{
 				printf("no declaration of %s in line %d.\n", expr->id, expr->lineno);
+				errorNum++;
 			}
 			break;
 		case EXPR_CONST:
@@ -272,6 +361,7 @@ Type getExprType(Expr expr, char* procName)
 			else if(getExprType(expr->e1, procName)==BOOL_TYPE || getExprType(expr->e2, procName)==BOOL_TYPE)
 			{
 				printf("wrong binop_expression operand type of bool in line %d.\n", expr->lineno);
+				errorNum++;
 				exprType =  ERROR_TYPE;
 			}
 			else if(getExprType(expr->e1, procName)==INT_TYPE && getExprType(expr->e2, procName)==INT_TYPE)
@@ -292,6 +382,7 @@ Type getExprType(Expr expr, char* procName)
 			else if(getExprType(expr->e1, procName)==BOOL_TYPE)
 			{
 				printf("wrong Unop_expression type of bool in line %d.\n", expr->lineno);
+				errorNum++;
 				exprType =  ERROR_TYPE;
 			}
 			else
@@ -305,11 +396,13 @@ Type getExprType(Expr expr, char* procName)
 			else if(getExprType(expr->e1, procName)==BOOL_TYPE || getExprType(expr->e2, procName)==BOOL_TYPE)
 			{
 				printf("wrong relation expression operand type of bool in line %d.\n", expr->lineno);
+				errorNum++;
 				exprType =  ERROR_TYPE;
 			}
 			else if(getExprType(expr->e1, procName)!=getExprType(expr->e2, procName))
 			{
 				printf("relation expression have different operands type in line %d.\n", expr->lineno);
+				errorNum++;
 				exprType =  ERROR_TYPE;
 			}
 			else
@@ -322,6 +415,7 @@ Type getExprType(Expr expr, char* procName)
 		if (exprType == ERROR_TYPE)
 		{
 			printf("Error type of expression! \n");
+			errorNum++;
 		}
 		return exprType;
 }
