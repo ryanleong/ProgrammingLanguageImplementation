@@ -12,6 +12,9 @@
 // Return 1 if success, 0 if failed
 int addProc(char* procName);
 
+// Check if proc exist
+int procExist(char* procName);
+
 // Add new declaration
 // Return 1 if success, 0 if failed
 int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum);

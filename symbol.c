@@ -46,9 +46,12 @@ void test() {
 //
 //    printf("%d\n", getType("getName", "93933"));
 
+
     addProc("main");
     addProc("test");
     // addProc("dsfdsf");
+
+    printf("EXIST: %d\n", procExist("main1"));
 
     addDecl("main", "temp", INT_TYPE, 0, 0, 0);
     addDecl("main", "temp", STRING_TYPE, 0, 1, 0);
@@ -217,6 +220,17 @@ int addProc(char* procName) {
     }
 
     return 1;
+}
+
+int procExist(char* procName) {
+
+    // check if proc exist
+    if(findProc(procName) != NULL) {
+    	return 1;
+    }
+    else {
+    	return 0;
+    }
 }
 
 int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum) {
