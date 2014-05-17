@@ -412,14 +412,28 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			// Print then statements
 			print_stmts(stmt->info.cond.then_branch, l, proc_id);
 
-			// Do False
-			printf("%s:\n", str);
+
+
 
 			// Print else statements
 			if (stmt->info.cond.else_branch != NULL) {
+				// Branch unconditional
+				char endIfLabel[80];
+				strcpy (endIfLabel,"end_if_");
+				strcat (endIfLabel,ifCountStr);
+				printf("branch_uncond %s\n", endIfLabel);
+
+				// Do False
+				printf("%s:\n", str);
+
 				print_stmts(stmt->info.cond.else_branch, l, proc_id);
+
+				// print end label
+				printf("%s:\n", endIfLabel);
 			}
 			
+
+
 			ifcount++;
 			printf("\n");
 			break;
