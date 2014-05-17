@@ -298,15 +298,10 @@ Type getExprType(Expr expr, char* procName)
 				printf("wrong relation expression operand type of bool in line %d.\n", expr->lineno);
 				exprType =  ERROR_TYPE;
 			}
-			else if(expr->relop == RELOP_EQ||expr->relop == RELOP_NE)
+			else if(getExprType(expr->e1, procName)!=getExprType(expr->e2, procName))
 			{
-				if(getExprType(expr->e1, procName)!=getExprType(expr->e2, procName))
-				{
 				printf("relation expression have different operands type in line %d.\n", expr->lineno);
 				exprType =  ERROR_TYPE;
-				}
-				else
-					exprType =  BOOL_TYPE;
 			}
 			else
 				exprType =  BOOL_TYPE;

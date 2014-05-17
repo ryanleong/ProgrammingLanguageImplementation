@@ -51,14 +51,15 @@ static void print_proc(Proc proc) {
 		//Get the number of declarations.
 		printf("push_stack_frame %d", stack_count);
 		printf("\n");
+		if(proc->header->params)
+			print_params(proc->header->params,proc->header->id);
 		//IF got int.
 		//Do for float too
 		printf("int_const r0, 0\n");
 		printf("real_const r1, 0.0\n");
 		printf("\n");
 		//Can get from tree?
-		if(proc->header->params)
-			print_params(proc->header->params,proc->	header->id);
+		
 		if(proc->decls)
 			print_decls(proc->decls, 1, proc->header->id);
 	}
@@ -67,7 +68,10 @@ static void print_proc(Proc proc) {
 		print_stmts(proc->body, 1, proc->header->id);
 	}
 	//printf("end\n");
-
+	printf("#epilogue\n");
+	if (stack_count != 0) 
+		printf("pop_stack_frame %d\n", stack_count);
+	printf("return\n");
 }
 
 
@@ -86,41 +90,25 @@ static void print_decls(Decls decls, int l, char* proc_id) {
 
 
 static void print_params(Params params, char* procName) {
-	Param first = params->first;
-	Params rest = params->rest;
-	if (first) {
-		print_pram(first, procName);
-		if (rest) {
-			print_params(rest, procName);
+	Params p = params;
+	int slot;
+	int i = 0;
+	while (p)
+	{
+		slot = getStackSlotNum(procName, p->first->id);
+		if (p->first->kind==VAL)
+		{
+			printf("store %d, r%d\n", slot, i);
 		}
+		else if(p->first->kind==REF)
+		{
+			printf("ref param");
+		}
+		p = p->rest;
+		i++;
 	}
 }
 
-static void print_pram(Param param, char* procName) {
-	int slot;
-	slot = getStackSlotNum(procName, param->id);
-	if(param->kind == REF)
-	{
-		//***************
-	}
-	else if(param->kind == VAL)
-	{
-		switch (param->type) {
-			case INT_PARAM:
-				printf("store %d, r0", slot);
-				printf("\n");
-				break;
-			case FLOAT_PARAM:
-				printf("store %d, r1", slot);
-				printf("\n");
-				break;
-			case BOOL_PARAM:
-				printf("store %d, r0", slot);
-				printf("\n");
-				break;
-		}
-	}
-}
 
 static void print_decl(Decl decl, int l, char* proc_id) {
 	//print_indent(l);
@@ -835,9 +823,10 @@ static void print_exprs(Exprs exprs,int reg, char* procName) {
 
 static void print_fncall(Stmt stmt, int l, char* procName) {
 	printf("# fncall\n");
-	print_indent(l);
+	//print_indent(l);
 	if(stmt->info.fncall.args)
 		print_exprs(stmt->info.fncall.args,0,procName);
+	//print_indent(l);
 	printf("call proc_%s\n", stmt->info.fncall.id);
 
 }
