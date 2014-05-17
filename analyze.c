@@ -115,8 +115,8 @@ void analyze_decl(Decl decl, char* procName)
 	}
 	else if(decl->intervals)
 	{
-		int size = getArraySize(intervals);
-		int dimension = getArrayDimension(intervals);
+		int size = getArrSize(decl->intervals);
+		int dimension = getArrDimension(decl->intervals);
 		if(size == -1)
 		{
 			printf("lower bound greater than higher bound.\n");
@@ -131,7 +131,7 @@ void analyze_decl(Decl decl, char* procName)
 	}
 }
 
-int getArrayDimension(Intervals intervals)
+int getArrDimension(Intervals intervals)
 {
 	int d = 0;
 	Intervals i = intervals;
@@ -143,7 +143,7 @@ int getArrayDimension(Intervals intervals)
 	return i;
 }
 
-int getArraySize(Intervals intervals)
+int getArrSize(Intervals intervals)
 {
 	int s = 0;
 	Intervals i = intervals;
@@ -286,7 +286,7 @@ void analyze_fncall(Stmt stmt, char* procName)
 void analyze_args(Exprs args, char* procName, char* callee)
 {
 	Expr first = args->first;
-	Exprs rest = args->rest；
+	Exprs rest = args->rest;
 	if(first)
 	{
 		analyze_expr(first, procName);
