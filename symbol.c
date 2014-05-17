@@ -540,8 +540,6 @@ int getArraySize(char* procName, char* name) {
 				// if declaration exist
 				if (strcmp(d->name, name) == 0) {
 
-					printf("TYPE: %d\n", d->type);
-
 					// Check if var is array
 					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
 						// return stack slot number
