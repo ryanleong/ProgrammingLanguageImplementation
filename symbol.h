@@ -23,7 +23,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum,
 // Add new array
 // Return 1 if success, 0 if failed
 int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, 
-	int arraySize, int dimension, Intervals intervals);
+	int arraySize, int dimension, Intervals* intervals);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);
@@ -75,7 +75,7 @@ int getArrayDimension(char* procName, char* name);
 int getArraySize(char* procName, char* name);
 
 // Get Intervals of array
-Intervals getIntervals(char* procName, char* name);
+Intervals* getIntervals(char* procName, char* name);
 
 // IGNORE THIS
 void test();

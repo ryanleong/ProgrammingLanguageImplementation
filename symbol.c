@@ -20,7 +20,7 @@ struct declaration {
     int paramNum;
     int arraySize;
     int arrayDimension;
-    Intervals intervals;
+    Intervals *intervals;
     struct declaration *next;
 };
 
@@ -300,7 +300,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum,
 
 
 int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, 
-	int arraySize, int dimension, Intervals intervals) {
+	int arraySize, int dimension, Intervals *intervals) {
 
     if(ListofProcs) {
         // check if proc exist
@@ -354,7 +354,7 @@ int addArray(char* procName, char* arrayName, Type type, int stackSlotNum,
 	return 0;
 }
 
-Intervals getIntervals(char* procName, char* name) {
+Intervals* getIntervals(char* procName, char* name) {
 	// If proc list not empty
 	if (ListofProcs) {
 		// Find proc
