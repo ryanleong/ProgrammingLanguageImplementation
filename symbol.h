@@ -64,5 +64,13 @@ int isRef(char* procName, char* varName);
 // USED FOR CALLING PROCS
 int isParamRef(char* procName, int paramNum);
 
+// Get number of dimensions for array
+// Returns -1 if error (e.g. No such proc)
+int getArrayDimension(char* procName, char* name);
+
+// Get total size of array
+// Returns -1 if error (e.g. No such proc)
+int getArraySize(char* procName, char* name);
+
 // IGNORE THIS
 void test();

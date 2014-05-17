@@ -60,6 +60,8 @@ void test() {
     addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
 
     addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 1);
+
+    printf("ArraySize: %d, arrayDimension: %d\n", getArraySize("main", "temp1"), getArrayDimension("main", "temp"));
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
@@ -485,6 +487,78 @@ int checkType(char* procName, char* varName, Type exprType) {
 
 	// Proc list empty
     return -2;
+}
+
+int getArrayDimension(char* procName, char* name){
+	// If proc list not empty
+	if (ListofProcs) {
+		// Find proc
+		ProcList *proc = findProc(procName);
+		
+		// Check if proc exist
+		if (proc) {
+			// Get first declaration
+			Declaration *d = proc->firstDecl;
+			
+			while (d) {
+				
+				// if declaration exist
+				if (strcmp(d->name, name) == 0) {
+					// Check if var is array
+					if (d->arraySize < 1 || d->arrayDimension < 1) {
+						return -1;
+					}
+					else {
+						// return stack slot number
+						return d->arrayDimension;	
+					}
+				}
+
+				d = d->next;
+			}
+			
+		}
+	}
+	
+	// Proc list empty
+	return -1;
+}
+
+int getArraySize(char* procName, char* name) {
+	// If proc list not empty
+	if (ListofProcs) {
+		// Find proc
+		ProcList *proc = findProc(procName);
+		
+		// Check if proc exist
+		if (proc) {
+			// Get first declaration
+			Declaration *d = proc->firstDecl;
+			
+			while (d) {
+				
+				// if declaration exist
+				if (strcmp(d->name, name) == 0) {
+
+					// Check if var is array
+					if (d->arraySize < 1 || d->arrayDimension < 1) {
+						return -1;
+					}
+					else {
+						// return stack slot number
+						return d->arraySize;	
+					}
+					
+				}
+
+				d = d->next;
+			}
+			
+		}
+	}
+	
+	// Proc list empty
+	return -1;
 }
 
 int getStackSize(char* procName) {
