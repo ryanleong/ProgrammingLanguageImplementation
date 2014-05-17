@@ -21,7 +21,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
 
 // Add new array
 // Return 1 if success, 0 if failed
-int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize);
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize, int dimension);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);

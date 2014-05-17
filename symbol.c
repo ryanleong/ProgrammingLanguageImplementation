@@ -19,6 +19,7 @@ struct declaration {
     int isRef;
     int paramNum;
     int arraySize;
+    int arrayDimension;
     struct declaration *next;
 };
 
@@ -58,7 +59,7 @@ void test() {
     addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
     addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
 
-    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5);
+    addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 1);
     
 
     // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
@@ -81,7 +82,7 @@ void test() {
 
         while(d) {
         	if(d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
-        		printf("\tVarName: %s, Type: %d, size: %d\n", d->name, d->type, d->arraySize);
+        		printf("\tVarName: %s, Type: %d, size: %d, dimension: %d\n", d->name, d->type, d->arraySize, d->arrayDimension);
         	}
         	else {
         		printf("\tVarName: %s, Type: %d, isRef: %d, paramNum: %d\n", d->name, d->type, d->isRef, d->paramNum);	
@@ -293,7 +294,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
 }
 
 
-int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize) {
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize, int dimension) {
     if(ListofProcs) {
         // check if proc exist
         ProcList *proc = findProc(procName);
@@ -304,6 +305,7 @@ int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int a
             d->name = arrayName;
             d->type = type;
             d->arraySize = arraySize;
+            d->arrayDimension = dimension;
             d->stackSlotNum = stackSlotNum;
 
         	// place declaration at start of list
