@@ -384,11 +384,6 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 	return -1;
 }
 
-static Type print_while(Expr expr, char* proc_id, int reg) {
-	printf("Here\n");
-	return -1;
-}
-
 static void print_stmt(Stmt stmt, int l, char* proc_id) {
 	switch (stmt->kind) {
 		case STMT_ASSIGN:
@@ -399,12 +394,23 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			break;
 		case STMT_COND:{
 			printf("#if\n");
+
 			// Form label
 			char ifCountStr[15];
-			sprintf(ifCountStr, "%d", ifcount);
 			char str[80];
-			strcpy (str,"if_is_false_");
-			strcat (str,ifCountStr);
+			if (stmt->info.cond.else_branch != NULL) {
+				sprintf(ifCountStr, "%d", ifcount);
+				strcpy (str,"else_");
+				strcat (str,ifCountStr);
+			}
+			else {
+				sprintf(ifCountStr, "%d", ifcount);
+				strcpy (str,"end_if_");
+				strcat (str,ifCountStr);
+			}
+
+			int currentIfCount = ifcount;
+			ifcount++;
 			
 			//print_cond(stmt->info.cond, l);
 			print_cond(stmt->info.cond.cond, proc_id, 0, 0, str, "");
@@ -413,28 +419,26 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			print_stmts(stmt->info.cond.then_branch, l, proc_id);
 
 
-
+			char endIfLabel[80];
+			char currCountStr[15];
+			sprintf(currCountStr, "%d", currentIfCount);
+			strcpy (endIfLabel,"end_if_");
+			strcat (endIfLabel,currCountStr);
 
 			// Print else statements
 			if (stmt->info.cond.else_branch != NULL) {
 				// Branch unconditional
-				char endIfLabel[80];
-				strcpy (endIfLabel,"end_if_");
-				strcat (endIfLabel,ifCountStr);
 				printf("branch_uncond %s\n", endIfLabel);
 
 				// Do False
 				printf("%s:\n", str);
 
 				print_stmts(stmt->info.cond.else_branch, l, proc_id);
-
-				// print end label
-				printf("%s:\n", endIfLabel);
 			}
-			
+		
+			// print end label
+			printf("%s:\n", endIfLabel);
 
-
-			ifcount++;
 			printf("\n");
 			break;
 		}
@@ -450,6 +454,9 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			strcpy (loopbreak,"loop_is_false_");
 			strcat (loopbreak,whileStr);
 
+			int currentLoopCount = loopcount;
+			loopcount++;
+
 			// print while condition
 			print_cond(stmt->info.loop.cond, proc_id, 0, 1, top, loopbreak);
 
@@ -463,7 +470,6 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 			printf("%s:\n", loopbreak);
 			printf("\n");
 
-			loopcount++;
 			break;
 		}
 		case STMT_READ:
