@@ -582,11 +582,11 @@ int getStackSize(char* procName) {
 
 				if(d->next == NULL) {
 					// if not array
-					if (d->type != INT_ARRAY_TYPE || d->type != FLOAT_ARRAY_TYPE || d->type != BOOL_ARRAY_TYPE) {
-						return d->stackSlotNum;
+					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
+						return (d->stackSlotNum + d->arraySize);
 					}
 					else {
-						return (d->stackSlotNum + d->arraySize);
+						return d->stackSlotNum;
 					}
 				}
 
