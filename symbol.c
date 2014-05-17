@@ -247,7 +247,7 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
                 	}
 
                 	// Check if param number is used
-                	if (dec->paramNum == paramNum) {
+                	if (dec->paramNum != -1 && dec->paramNum == paramNum) {
                 		paramNumUsed = 1;
                 	}
 
