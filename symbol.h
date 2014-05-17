@@ -44,6 +44,10 @@ int getStackSlotNum(char* procName, char* varName);
 // Returns -1 if var is not found
 Type getType(char* procName, char* varName);
 
+// Returns type of param
+// Returns -1 if param is not found
+Type getParamType(char* procName, int paramNum);
+
 // Returns 1 if var is a reference
 // Returns 0 if var is a val
 // Returns -1 if var does not exist

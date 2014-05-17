@@ -395,6 +395,39 @@ Type getType(char* procName, char* varName){
     return -2;
 }
 
+Type getParamType(char* procName, int paramNum) {
+	// If proc list is not empty
+	if (ListofProcs) {
+		// check if proc exist
+		ProcList *proc = findProc(procName);
+
+		if (proc) {
+
+			Declaration *d = proc->firstDecl;
+
+			while(d) {
+
+				// if declaration exist
+				if (d->paramNum == paramNum) {
+                    return d->type;
+				}
+
+				d = d->next;
+			}
+
+			// If declaration does not exist
+			return -1;
+
+		} else {
+			// Proc does not exist
+			return -2;
+		}
+	}
+
+	// Proc list empty
+    return -2;
+}
+
 int checkType(char* procName, char* varName, Type exprType) {
 
 	// If proc list is not empty
