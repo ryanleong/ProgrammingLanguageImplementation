@@ -17,11 +17,13 @@ int procExist(char* procName);
 
 // Add new declaration
 // Return 1 if success, 0 if failed
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum);
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, 
+	int isRef, int paramNum);
 
 // Add new array
 // Return 1 if success, 0 if failed
-int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize, int dimension);
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, 
+	int arraySize, int dimension, Intervals intervals);
 
 // Check if declared (1 = true, 0 = false)
 int inDeclared(char* procName, char* varName);
@@ -71,6 +73,9 @@ int getArrayDimension(char* procName, char* name);
 // Get total size of array
 // Returns -1 if error (e.g. No such proc)
 int getArraySize(char* procName, char* name);
+
+// Get Intervals of array
+Intervals getIntervals(char* procName, char* name);
 
 // IGNORE THIS
 void test();

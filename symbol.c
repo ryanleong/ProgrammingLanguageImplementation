@@ -20,6 +20,7 @@ struct declaration {
     int paramNum;
     int arraySize;
     int arrayDimension;
+    Intervals intervals;
     struct declaration *next;
 };
 
@@ -236,7 +237,8 @@ int procExist(char* procName) {
     }
 }
 
-int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int isRef, int paramNum) {
+int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, 
+	int isRef, int paramNum) {
 
     if(ListofProcs) {
         // check if proc exist
@@ -275,7 +277,8 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
                 		paramNumUsed = 1;
                 	}
 
-                    if (dec->next == NULL && isDeclared == 0 && paramNumUsed == 0) {
+                    if (dec->next == NULL && isDeclared == 0 
+                    	&& paramNumUsed == 0) {
                         dec->next = d;
                         return 1;
                     }
@@ -296,7 +299,9 @@ int addDecl(char* procName, char* varName, Type varType, int stackSlotNum, int i
 }
 
 
-int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int arraySize, int dimension) {
+int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, 
+	int arraySize, int dimension, Intervals intervals) {
+
     if(ListofProcs) {
         // check if proc exist
         ProcList *proc = findProc(procName);
@@ -308,6 +313,7 @@ int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int a
             d->type = type;
             d->arraySize = arraySize;
             d->arrayDimension = dimension;
+            d->intervals = intervals;
             d->stackSlotNum = stackSlotNum;
 
         	// place declaration at start of list
@@ -346,6 +352,45 @@ int addArray(char* procName, char* arrayName, Type type, int stackSlotNum, int a
 
     // Failed when no procs exist
 	return 0;
+}
+
+Intervals getIntervals(char* procName, char* name) {
+	// If proc list not empty
+	if (ListofProcs) {
+		// Find proc
+		ProcList *proc = findProc(procName);
+		
+		// Check if proc exist
+		if (proc) {
+			// Get first declaration
+			Declaration *d = proc->firstDecl;
+			
+			while (d) {
+				
+				// if declaration exist
+				if (strcmp(d->name, name) == 0) {
+
+					// Check if var is array
+					if (d->type == INT_ARRAY_TYPE || 
+						d->type == FLOAT_ARRAY_TYPE || 
+						d->type == BOOL_ARRAY_TYPE) {
+
+						// return stack slot number
+						return d->intervals;	
+					}
+					else {
+						return NULL;
+					}
+				}
+
+				d = d->next;
+			}
+			
+		}
+	}
+	
+	// Proc list empty
+	return NULL;
 }
 
 int inDeclared(char* procName, char* varName) {
@@ -505,7 +550,10 @@ int getArrayDimension(char* procName, char* name){
 				// if declaration exist
 				if (strcmp(d->name, name) == 0) {
 					// Check if var is array
-					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
+					if (d->type == INT_ARRAY_TYPE || 
+						d->type == FLOAT_ARRAY_TYPE || 
+						d->type == BOOL_ARRAY_TYPE) {
+
 						// return stack slot number
 						return d->arrayDimension;	
 					}
@@ -541,7 +589,10 @@ int getArraySize(char* procName, char* name) {
 				if (strcmp(d->name, name) == 0) {
 
 					// Check if var is array
-					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
+					if (d->type == INT_ARRAY_TYPE || 
+						d->type == FLOAT_ARRAY_TYPE || 
+						d->type == BOOL_ARRAY_TYPE) {
+
 						// return stack slot number
 						return d->arraySize;	
 						
@@ -580,7 +631,10 @@ int getStackSize(char* procName) {
 
 				if(d->next == NULL) {
 					// if not array
-					if (d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
+					if (d->type == INT_ARRAY_TYPE || 
+						d->type == FLOAT_ARRAY_TYPE || 
+						d->type == BOOL_ARRAY_TYPE) {
+						
 						return (d->stackSlotNum + d->arraySize);
 					}
 					else {
