@@ -757,7 +757,14 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
-			printf("load r%d, %d\n", curr_reg,stackNo);
+			if(isRef(proc_id,expr->id)==0){
+
+				printf("load r%d, %d\n", curr_reg,stackNo);
+			}
+			if(isRef(proc_id,expr->id)==1){
+				printf("load r%d, %d\n", curr_reg,stackNo);
+				printf("load_indirect r%d, r%d\n", curr_reg,curr_reg);
+			}
 			break;
 		case EXPR_CONST:
 			print_constant(expr->constant, curr_reg);
@@ -799,11 +806,12 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 			stackNo = getStackSlotNum(proc_id, expr->id);
 			//printf("%d\n",paramNum);
 			if(isParamRef(callee,paramNum)==0){
-
 				printf("load r%d, %d\n", curr_reg,stackNo);
+				if(getParamType(callee,paramNum)==FLOAT_TYPE && ID_type==INT_TYPE){
+					printf("int_to_real r%d, r%d\n", curr_reg,curr_reg);
+				}
 			}
 			if(isParamRef(callee,paramNum)==1){
-
 				printf("load_address r%d, %d\n", curr_reg,stackNo);
 			}
 			break;
@@ -813,16 +821,16 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 		case EXPR_BINOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
+			curr_reg = print_arg(expr->e1, curr_reg, proc_id, paramNum, callee);
+			next_reg = print_arg(expr->e2, curr_reg + 1, proc_id, paramNum, callee);
 			print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_RELOP:
 			ID_type = getExprType(expr->e1, proc_id);
 			ID_type2 = getExprType(expr->e2, proc_id);
 			
-			curr_reg = print_expr(expr->e1, curr_reg, proc_id);
-			next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
+			curr_reg = print_arg(expr->e1, curr_reg, proc_id, paramNum, callee);
+			next_reg = print_arg(expr->e2, curr_reg + 1, proc_id, paramNum, callee);
 			print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
 			break;
 		case EXPR_UNOP:	
@@ -894,10 +902,7 @@ void print_unop_string(int unop, int reg, int ID){
 		case UNOP_NOT:
 			printf("not r%d, r%d\n", reg, reg);
 			break;
-	
 	}
-
-
 }
 
 static void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* callee) {
