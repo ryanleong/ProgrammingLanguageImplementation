@@ -129,7 +129,7 @@ int isParamRef(char* procName, int paramNum) {
 				// if parameter exist
 				if (r->paramNum == paramNum) {
 
-					if(r->paramNum > -1) {
+					if(r->paramNum > -1 && r->isRef == 1) {
 						// return true
 						return 1;
 					}

@@ -1,0 +1,11 @@
+
+To generate the Oz emulator, simply type
+
+  make
+
+This will generate an executable called oz which takes 
+the name of a Wiz file as its command line argument.
+
+The generation has been tested on the CIS student 
+machines.
+
