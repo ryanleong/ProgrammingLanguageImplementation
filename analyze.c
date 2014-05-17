@@ -34,8 +34,8 @@ void analyze_procs(Procs procs)
 
 void analyze_proc(Proc proc)
 {
+	slotNum = 0;
 	analyze_head(proc->header);
-
 	if(proc->decls)
 		analyze_decls(proc->decls, proc->header->id);
 	if(proc->body){

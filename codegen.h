@@ -1,10 +1,10 @@
 static Procs sort_procs(Procs);
 static void print_indent(int);
 static void print_constant(Constant, int);
-int print_expr(Expr, int, char*);
+int print_expr(Expr, int, char*,int);
 static void print_write_expr(Expr, int, char*);
 static void print_write_constant(Constant);
-static void print_exprs(Exprs, int, char*);
+static void print_exprs(Exprs, int, char*,int);
 static void print_stmt(Stmt, int, char*);
 static void print_stmts(Stmts, int, char*);
 static void print_procs(Procs);
