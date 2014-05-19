@@ -160,16 +160,18 @@ int getArrDimension(Intervals intervals)
 
 int getArrSize(Intervals intervals)
 {
-	int s = 0;
+	int s = 1;
 	Intervals i = intervals;
-	while(i)
-	{
+	
+	while(i) {
 		if(i->first->start > i->first->end)
 		{
 			return -1;
 		}
-		else
-			s = s + i->first->end - i->first->start + 1;
+		else{
+			int z = i->first->end - i->first->start + 1;
+			s *= z;
+		}
 		i = i->rest;
 	}
 	return s;
