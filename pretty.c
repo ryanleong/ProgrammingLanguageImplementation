@@ -398,13 +398,23 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 	return -1;
 }
 
+static print_assign_array(Assign assign, Exprs expr, char* proc_id) {
+
+	// calculate offset
+	int reg = calculate_offset(expr, 0, assign.id, proc_id);
+
+	int next_reg = print_expr(expr, 1, proc_id);
+
+	printf("store_indirect r%d, r%d\n", reg, next_reg);
+}
+
 static void print_stmt(Stmt stmt, int l, char* proc_id) {
 	switch (stmt->kind) {
 		case STMT_ASSIGN:
 			print_assign(stmt->info.assign, l, proc_id);
 			break;		
 		case STMT_ASSIGN_ARRAY:
-			//print_assign_array(stmt->info.assign, l);
+			print_assign_array(stmt->info.assign, stmt->info.assign.exprs, proc_id);
 			break;
 		case STMT_COND:{
 			printf("#if\n");
@@ -489,9 +499,31 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 		case STMT_READ:
 			print_read(stmt, l, proc_id);
 			break;		
-		case STMT_READ_ARRAY:
-			print_read_array(stmt, l);
+		case STMT_READ_ARRAY: {
+			// print_read_array(stmt, l);
+
+			// calculate offset
+			int reg = calculate_offset(stmt->info.array.exprs, 1, stmt->info.assign.id, proc_id);
+
+			switch(getType(proc_id, stmt->info.assign.id)) {
+				case(INT_ARRAY_TYPE):
+					printf("call_builtin read_int \n");
+					break;
+
+				case(FLOAT_ARRAY_TYPE):
+					printf("call_builtin read_float \n");
+					break;
+
+				case(BOOL_ARRAY_TYPE):
+					printf("call_builtin read_bool \n");
+					break;
+				
+			}
+
+
+			printf("store_indirect r%d, r%d\n", reg, 0);
 			break;
+		}
 		case STMT_WRITE:
 			print_write(stmt, l, proc_id);
 			break;
@@ -814,10 +846,68 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 	return curr_reg;		
 }
 
+int calc(int highBounds[], int lowBounds[], int currDimension, int dimension, int reg, int nextFreeReg) {
+
+	if (currDimension <= dimension) {
+
+		int temp = (highBounds[currDimension-1] - lowBounds[currDimension-1]) + 1;
+
+		printf("int_const r%d, %d\n", nextFreeReg, temp);
+
+		// printf("int_const r%d, %d\n", nextFreeReg, highBounds[currDimension-1]);
+		// printf("int_const r%d, %d\n", nextFreeReg+1, lowBounds[currDimension-1]);
+		// printf("sub_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);
+		// printf("int_const r%d, %d\n", nextFreeReg+1, 1);
+		// printf("add_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);
+
+		int next_reg = calc(highBounds, lowBounds, currDimension+1, dimension, reg+1, nextFreeReg+1);
+
+		if(currDimension != dimension)
+			printf("mul_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);	
+
+		return nextFreeReg;
+	}
+	else {
+		return reg-1;
+	}
+}
+
+int calc2(int highBounds[], int lowBounds[], int currentDimension, int dimension, int next_reg, int curr_reg) {
+	
+	if (currentDimension ==  dimension) {
+		printf("int_const r%d, %d\n", next_reg, lowBounds[currentDimension-1]);
+		printf("sub_int r%d, r%d, r%d\n", next_reg, curr_reg, next_reg);
+		printf("add_int r%d, r%d, r%d\n", next_reg-1, next_reg-1, next_reg);
+		return -1;
+	}
+
+	printf("int_const r%d, %d\n", next_reg, lowBounds[currentDimension-1]);
+	printf("sub_int r%d, r%d, r%d\n", next_reg, curr_reg, next_reg);
+	printf("\n");
+	// calculate for each dimension
+	int stored_reg = calc(highBounds, lowBounds, currentDimension+1, dimension, curr_reg, next_reg+1);
+
+	// addition
+	//printf("add_int r%d, r%d, r%d\n", currentDimension, );
+
+	printf("\n");
+	printf("mul_int r%d, r%d, r%d\n", next_reg, next_reg, stored_reg);
+	printf("\n");
+
+	calc2(highBounds, lowBounds, currentDimension+1, dimension, next_reg+1, curr_reg+1);
+
+	if(currentDimension != 1)
+		printf("add_int r%d, r%d, r%d\n", next_reg-1, next_reg-1, next_reg);
+	// curr_reg++;
+	// next_reg++;
+	// currentDimension++;
+	return 0;
+}
+
 int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
 	int stackNo;
 	int curr_reg = reg;
-	int next_reg = curr_reg+1;
+	
 	int dimension;
 	int size;
 	Intervals array_interval;
@@ -828,25 +918,35 @@ int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
 	int bounds[size];
 	array_interval = getIntervals(proc_id, id);
 	int j = 0;
+	int next_reg = curr_reg+dimension;
+
+
+	int highBounds[dimension];
+	int lowBounds[dimension];
+
 	while (array_interval != NULL){
-		bounds[j] = array_interval->first->start;
-		j++;
-		bounds[j] = array_interval->first->end;
+		highBounds[j] = array_interval->first->end;
+		lowBounds[j] = array_interval->first->start;
+
 		j++;
 		array_interval = array_interval->rest;
 	}
-	//printf("%d\n", bounds[0]);
-	int i = 0;
-	while (i < dimension*2){
-		printf("%d\n", bounds[i]);
-		i++;
-	}
+
+	// printf("\n=============================\n");
+	// /printf("%s\n", );
+	int currentDimension = 1;
+
+	calc2(highBounds, lowBounds, currentDimension, dimension, next_reg, curr_reg);
+
+	// printf("\n=============================\n");
+
 	
-	printf("sub_offset r%d, r%d, r%d\n", curr_reg, next_reg, curr_reg);
-	/*load_address r2, 4 # 
-	sub_offset r1, r2, r1 # 
-	store_indirect r1, r0 # 
-*/
+	printf("load_address r%d, %d\n", 0, stackNo);
+	printf("sub_offset r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
+
+	// store_indirect r1, r0 # 
+
+	return curr_reg;
 }
 
 int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {

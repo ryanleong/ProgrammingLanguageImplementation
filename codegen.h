@@ -13,7 +13,7 @@ static void print_header(Header);
 static void print_decls(Decls, int, char*);
 static void print_decl(Decl, int, char*);
 static void print_assign(Assign, int, char*);
-//static void print_assign_array(Assign, int);
+static void print_assign_array(Assign, Exprs, char*);
 //static void print_cond(Cond, int);
 //static void print_while(While, int);
 static void print_params(Params, char*);
