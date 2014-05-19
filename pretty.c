@@ -840,7 +840,7 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 			printf("[");
 			print_exprs(expr->es);
 			printf("]");*/
-			calculate_offset(expr->es, curr_reg, expr->id, proc_id);
+			curr_reg = calculate_offset(expr->es, curr_reg, expr->id, proc_id);
 			break;	
 			}
 	return curr_reg;		
