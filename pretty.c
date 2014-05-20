@@ -228,7 +228,6 @@ static void print_stmts(Stmts stmts, int l, char* proc_id) {
 
 static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
 
-	// TODO Check if e1 or e2 are expressions
 	// Print label if while loop
 	if (stmt_type == 1) {
 		// Add label to branch to at top of loop
@@ -237,14 +236,16 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 
 	switch(expr->kind) {
 		case EXPR_ID: {
+			// Get type of expression
 			Type exprType = getType(proc_id,expr->id);
 			printf("load r%d, %d\n", reg, exprType);
 
 			if (stmt_type == 0) {
+				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// Branch away if false
+				// print branch for while
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -253,13 +254,15 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 		}
 		case EXPR_CONST:
 
+			// print int constant
 			printf("int_const r%d, %d\n", reg, expr->constant.val.bool_val);
 
 			if (stmt_type == 0) {
+				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// Branch away if false
+				// print branch for while
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -278,7 +281,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			break;
 		case EXPR_BINOP: {
 
-
+			// print binary operations
 			reg = print_expr(expr->e1, reg, proc_id);
 			int reg1 = print_expr(expr->e2, reg+1, proc_id);
 			int ID_type = getExprType(expr->e1, proc_id);
@@ -286,10 +289,11 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
 
 			if (stmt_type == 0) {
+				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// Branch away if false
+				// print branch for while
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -297,15 +301,12 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 		}
 		case EXPR_RELOP: {
 
+			// print expressions in if or while condition
 			int reg1 = print_expr(expr->e1, reg, proc_id);
 			int reg2 = print_expr(expr->e2, reg+1, proc_id);
 
 			Type e1Type = getExprType(expr->e1, proc_id);
 			Type e2Type = getExprType(expr->e2, proc_id);
-
-			// Type e1Type = print_cond(expr->e1, proc_id, reg, stmt_type, label1, label2);
-			// reg++;
-			// Type e2Type = print_cond(expr->e2, proc_id, reg, stmt_type, label1, label2);
 
 			Type evalType = -1;
 
@@ -323,74 +324,18 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 				evalType = BOOL_TYPE;
 			}
 
+			// print relational operation
 			print_relop_string(expr->relop, reg1, reg2, e1Type, e2Type);
 
-			// // Check expression/var/const type
-			// switch(evalType) {
-			// 	case INT_TYPE:
-			// 		// check for RELOP type
-			// 		switch(expr->relop){
-			// 			case RELOP_EQ:
-			// 				printf("cmp_eq_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_NE:
-			// 				printf("cmp_ne_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_LT:
-			// 				printf("cmp_lt_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_GT:
-			// 				printf("cmp_gt_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_LE:
-			// 				printf("cmp_le_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_GE:
-			// 				printf("cmp_ge_int r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 		}
-
-			// 		break;
-
-			// 	case FLOAT_TYPE:
-
-			// 		// check for RELOP type
-			// 		switch(expr->relop){
-			// 			case RELOP_EQ:
-			// 				printf("cmp_eq_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_NE:
-			// 				printf("cmp_ne_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_LT:
-			// 				printf("cmp_lt_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_GT:
-			// 				printf("cmp_gt_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_LE:
-			// 				printf("cmp_le_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 			case RELOP_GE:
-			// 				printf("cmp_ge_real r%d r%d r%d\n", reg1, reg1, reg2);
-			// 				break;
-			// 		}
-
-			// 		break;
-			// 	case BOOL_TYPE:
-			// 		break;
-			// }
-
 			if (stmt_type == 0) {
+				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg1, label1);
 			}
 			else if (stmt_type == 1) {
-				// Branch away if false
+				// print branch for while
 				printf("branch_on_false r%d, %s\n", reg1, label2);
 			}
 
-			
-		
 			break; 
 		}
 	}
@@ -468,6 +413,8 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 		}
 		case STMT_WHILE:{
 			printf("#while\n");
+
+			// print while labels
 			char whileStr[15];
 			sprintf(whileStr, "%d", loopcount);
 			char top[80];
@@ -517,24 +464,25 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 				case(BOOL_ARRAY_TYPE):
 					printf("call_builtin read_bool \n");
 					break;
-				
 			}
 
-
+			// Store indirect for array
 			printf("store_indirect r%d, r%d\n", reg, 0);
 			break;
 		}
 		case STMT_WRITE:
+			// Print write statement
 			print_write(stmt, l, proc_id);
 			break;
 		case STMT_FNCALL:
+			// Print proc calls
 			print_fncall(stmt, l, proc_id);
 			break;
 	}
 }
 
 static void print_assign(Assign assign, int l, char* proc_id) {
-	//print_indent(l);
+
 	int ID_type;
 	int expr_type;
 	int slot;
@@ -854,12 +802,6 @@ int calc(int highBounds[], int lowBounds[], int currDimension, int dimension, in
 
 		printf("int_const r%d, %d\n", nextFreeReg, temp);
 
-		// printf("int_const r%d, %d\n", nextFreeReg, highBounds[currDimension-1]);
-		// printf("int_const r%d, %d\n", nextFreeReg+1, lowBounds[currDimension-1]);
-		// printf("sub_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);
-		// printf("int_const r%d, %d\n", nextFreeReg+1, 1);
-		// printf("add_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);
-
 		int next_reg = calc(highBounds, lowBounds, currDimension+1, dimension, reg+1, nextFreeReg+1);
 
 		if(currDimension != dimension)
@@ -887,8 +829,6 @@ int calc2(int highBounds[], int lowBounds[], int currentDimension, int dimension
 	// calculate for each dimension
 	int stored_reg = calc(highBounds, lowBounds, currentDimension+1, dimension, curr_reg, next_reg+1);
 
-	// addition
-	//printf("add_int r%d, r%d, r%d\n", currentDimension, );
 
 	printf("\n");
 	printf("mul_int r%d, r%d, r%d\n", next_reg, next_reg, stored_reg);
@@ -898,9 +838,7 @@ int calc2(int highBounds[], int lowBounds[], int currentDimension, int dimension
 
 	if(currentDimension != 1)
 		printf("add_int r%d, r%d, r%d\n", next_reg-1, next_reg-1, next_reg);
-	// curr_reg++;
-	// next_reg++;
-	// currentDimension++;
+
 	return 0;
 }
 
@@ -932,14 +870,9 @@ int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
 		array_interval = array_interval->rest;
 	}
 
-	// printf("\n=============================\n");
-	// /printf("%s\n", );
 	int currentDimension = 1;
 
 	calc2(highBounds, lowBounds, currentDimension, dimension, next_reg, curr_reg);
-
-	// printf("\n=============================\n");
-
 	
 	printf("load_address r%d, %d\n", 0, stackNo);
 	printf("sub_offset r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
@@ -960,7 +893,7 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
-			//printf("%d\n",paramNum);
+
 			if(isParamRef(callee,paramNum)==0){
 
 				printf("load r%d, %d\n", curr_reg,stackNo);

@@ -12,6 +12,7 @@
 #include "symbol.h"
 #include "ast.h"
 
+// Declaration struct to hold variables
 struct declaration {
     char* name;
     Type type;
@@ -24,6 +25,7 @@ struct declaration {
     struct declaration *next;
 };
 
+// List to hold proc struct
 struct proclist {
     char* procName;
     struct declaration *firstDecl;
