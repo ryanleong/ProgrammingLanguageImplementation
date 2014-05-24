@@ -640,7 +640,7 @@ int getStackSize(char* procName) {
 						return (d->stackSlotNum + d->arraySize);
 					}
 					else {
-						return d->stackSlotNum;
+						return d->stackSlotNum+1;
 					}
 				}
 
