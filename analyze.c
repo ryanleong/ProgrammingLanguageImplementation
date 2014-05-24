@@ -471,10 +471,10 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
     {
         // ref parameters
         if((getParamType(callee, paramNum) != getExprType(arg, procName)) &&
-            (getParamType(callee, paramNum) != 
-                              getArrayType(getExprType(arg, procName))))
+            (getArrayType(getParamType(callee, paramNum)) != 
+                              getExprType(arg, procName)))
         {
-            printf("No.%d parameter has wrong type.\n", paramNum+1);
+            printf("No.%d parameter of function call %s has wrong type.\n",paramNum+1, callee);
             errorNum++;
         }
     }
@@ -482,8 +482,8 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
     {
         // val parameters
         if((getParamType(callee, paramNum) != getExprType(arg, procName)) &&
-            (getParamType(callee, paramNum) != 
-                              getArrayType(getExprType(arg, procName))))
+            (getArrayType(getParamType(callee, paramNum)) != 
+                              getExprType(arg, procName)))
         {
             if(getParamType(callee, paramNum) == FLOAT_TYPE && 
                 (getExprType(arg, procName) == INT_TYPE ||
@@ -491,7 +491,7 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
             {}
             else
             {
-                printf("No.%d parameter has wrong type.\n", paramNum+1);
+                printf("No.%d parameter of function call %s has wrong type.\n",paramNum+1, callee);
                 errorNum++;
             }
         }
@@ -645,7 +645,7 @@ Type getExprType(Expr expr, char* procName)
                         getExprType(expr->e2, procName)==BOOL_ARRAY_TYPE))
             {
                 // relation operator must not have bool type operand
-                printf("wrong relation expression operand type of bool in line .\n");
+                printf("wrong relation expression operand type of bool.\n");
                 errorNum++;
                 exprType =  ERROR_TYPE;
             }
@@ -674,7 +674,7 @@ Type getExprType(Expr expr, char* procName)
         if (exprType == ERROR_TYPE)
         {
             // report an error
-            printf("Error type of expression! %d");
+            printf("Error type of expression!\n");
             errorNum++;
         }
         return exprType;
