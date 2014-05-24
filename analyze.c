@@ -297,10 +297,13 @@ void analyze_assign(Assign assign, char* procName)
 {
     analyze_expr(assign.expr, procName);
     int r = checkType(procName, assign.id, getExprType(assign.expr, procName));
+    int j = getArrayType(getType(procName,assign.id)) == getExprType(assign.expr, procName) ? 1:0;
     if(getType(procName,assign.id)==FLOAT_TYPE && 
-        getExprType(assign.expr, procName)==INT_TYPE)
+        getExprType(assign.expr, procName)==INT_TYPE ||
+         getType(procName,assign.id)==FLOAT_TYPE && 
+          getExprType(assign.expr, procName)==INT_ARRAY_TYPE)
         r = 1;
-    if(r == 0)
+    if(r == 0 && j == 0)
     {
         printf("wrong assign type of %s.\n", assign.id);
         errorNum++;
@@ -320,10 +323,13 @@ Type getArrayType(Type type)
     switch(type)
     {
         case INT_TYPE:
+        case INT_ARRAY_TYPE:
             return INT_ARRAY_TYPE;
         case FLOAT_TYPE:
+        case FLOAT_ARRAY_TYPE:
             return FLOAT_ARRAY_TYPE;
         case BOOL_TYPE:
+        case BOOL_ARRAY_TYPE:
             return BOOL_ARRAY_TYPE;
         default:
             return ERROR_TYPE;
@@ -519,6 +525,12 @@ void analyze_expr(Expr expr, char* procName)
             analyze_expr(expr->e2, procName);
             break;
         case EXPR_ARRAY:
+            if(inDeclared(procName, expr->id) != 1)
+            {
+                printf("no declaration of %s in line %d.\n", 
+                                   expr->id, expr->lineno);
+                errorNum++;
+            }
             analyze_exprs(expr->es,procName);
             break;
     }
@@ -544,7 +556,8 @@ void analyze_exprs(Exprs exprs, char* procName)
 Type getExprType(Expr expr, char* procName)
 {
     Type exprType;
-    switch (expr->kind) {
+    switch (expr->kind)
+    {
         case EXPR_ID:
             exprType = getType(procName,expr->id);
             break;
@@ -654,13 +667,14 @@ Type getExprType(Expr expr, char* procName)
                 // relation expression is bool type
                 exprType =  BOOL_TYPE;
             break;
-            exprType = getType(procName, expr->id);
+            case EXPR_ARRAY:
+                exprType = getType(procName, expr->id);
             break;
         }
         if (exprType == ERROR_TYPE)
         {
             // report an error
-            printf("Error type of expression! %d \n", expr->lineno);
+            printf("Error type of expression! %d");
             errorNum++;
         }
         return exprType;
