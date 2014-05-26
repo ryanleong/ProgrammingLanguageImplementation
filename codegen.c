@@ -16,10 +16,42 @@
 #include "symbol.h"
 #include "analyze.h"
 
+// Function declarations
+Procs sort_procs(Procs);
+void print_indent(int);
+void print_constant(Constant, int);
+void print_write_expr(Expr, int, char*);
+void print_write_constant(Constant);
+void print_exprs(Exprs, int, char*);
+void print_stmt(Stmt, char*);
+void print_stmts(Stmts, char*);
+void print_procs(Procs);
+void print_proc(Proc);
+void print_header(Header);
+void print_decls(Decls, char*);
+void print_decl(Decl, char*);
+void print_assign(Assign, char*);
+void print_assign_array(Assign, Exprs, char*);
+void print_params(Params, char*);
+void print_pram(Param,char*);
+void print_args(Exprs,int, char*, int,char* );
+void print_write(Stmt, char*);
+void print_read(Stmt, char*);
+void print_fncall(Stmt, char*);
+void print_intervals(Intervals);
+void print_interval(Interval);
+void print_relop_string(int, int, int, int, int);
+void print_binop_string(int, int, int, int, int);
+void print_unop_string(int, int, int);
+void print_read_array(Stmt, char*);
+int print_expr(Expr, int, char*);
+int print_arg(Expr, int, char*,int,char*);
+
+// Globals
 int loopcount = 0;
 int ifcount = 0;
 
-void pretty_prog(FILE *fp, Program prog) {
+void codegen_prog(FILE *fp, Program prog) {
     Procs sorted_procs = sort_procs(prog->procs);
     printf("call proc_main\n");
     printf("halt\n");
@@ -30,7 +62,7 @@ void pretty_prog(FILE *fp, Program prog) {
 /* 
     Print all procs
 */
-static void print_procs(Procs procs) {
+void print_procs(Procs procs) {
     Proc first = procs->first;
     Procs rest = procs->rest;
     
@@ -48,7 +80,7 @@ static void print_procs(Procs procs) {
 /* 
     Print proc prologue, body, and epilogue
 */
-static void print_proc(Proc proc) {
+void print_proc(Proc proc) {
     // Print proc label
     printf("proc_%s:", proc->header->id);
     int stack_count = getStackSize(proc->header->id);
@@ -73,14 +105,14 @@ static void print_proc(Proc proc) {
         
         // Print proc declarations
         if(proc->decls)
-            print_decls(proc->decls, 1, proc->header->id);
+            print_decls(proc->decls, proc->header->id);
     }
 
     printf("\n");
 
     // Print proc body
     if (proc->body) {
-        print_stmts(proc->body, 1, proc->header->id);
+        print_stmts(proc->body, proc->header->id);
     }
 
     // Print epilogue
@@ -94,22 +126,22 @@ static void print_proc(Proc proc) {
 /* 
     Print all declarations 
 */
-static void print_decls(Decls decls, int l, char* proc_id) {
+void print_decls(Decls decls, char* proc_id) {
     Decl first = decls->first;
     Decls rest = decls->rest;
     
     if (first) {
-        print_decl(first, l, proc_id);
+        print_decl(first, proc_id);
     }
     if (rest) {
-        print_decls(rest, l, proc_id);
+        print_decls(rest, proc_id);
     }
 }
 
 /* 
     Print all params of procs
 */
-static void print_params(Params params, char* procName) {
+void print_params(Params params, char* procName) {
     Params p = params;
     int slot;
     int i = 0;
@@ -133,7 +165,7 @@ static void print_params(Params params, char* procName) {
 /* 
     Print declarations
 */
-static void print_decl(Decl decl, int l, char* proc_id) {
+void print_decl(Decl decl, char* proc_id) {
 
     int slot;
     slot = getStackSlotNum(proc_id, decl->id);
@@ -189,7 +221,7 @@ static void print_decl(Decl decl, int l, char* proc_id) {
 /* 
     Print all intervals in array
 */
-static void print_intervals(Intervals intervals) {
+void print_intervals(Intervals intervals) {
     Interval first = intervals->first;
     Intervals rest = intervals->rest;
 
@@ -206,29 +238,29 @@ static void print_intervals(Intervals intervals) {
 /* 
     Print interval in a dimension of an array
 */
-static void print_interval(Interval interval) {
+void print_interval(Interval interval) {
     printf("%d..%d", interval->start, interval->end);
 }
 
 /* 
     Print all statements
 */
-static void print_stmts(Stmts stmts, int l, char* proc_id) {
+void print_stmts(Stmts stmts, char* proc_id) {
     Stmt first = stmts->first;
     Stmts rest = stmts->rest;
 
     if (first) {
-        print_stmt(first, l, proc_id);
+        print_stmt(first, proc_id);
     }
     if (rest) {
-        print_stmts(rest, l, proc_id);
+        print_stmts(rest, proc_id);
     }
 }
 
 /* 
     Print Conditions of while or if statements
 */
-static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
+Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
 
     // Print label if while loop
     if (stmt_type == 1) {
@@ -348,7 +380,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* l
 /* 
     Print array assignments
 */
-static print_assign_array(Assign assign, Exprs expr, char* proc_id) {
+print_assign_array(Assign assign, Exprs expr, char* proc_id) {
 
     // Calculate offset
     int reg = calculate_offset(expr, 0, assign.id, proc_id);
@@ -362,12 +394,12 @@ static print_assign_array(Assign assign, Exprs expr, char* proc_id) {
 /* 
     Print statments in proc
 */
-static void print_stmt(Stmt stmt, int l, char* proc_id) {
+void print_stmt(Stmt stmt, char* proc_id) {
 
     // Print based on statement kind
     switch (stmt->kind) {
         case STMT_ASSIGN:
-            print_assign(stmt->info.assign, l, proc_id);
+            print_assign(stmt->info.assign, proc_id);
             break;      
         case STMT_ASSIGN_ARRAY:
             print_assign_array(stmt->info.assign, stmt->info.assign.exprs, proc_id);
@@ -396,7 +428,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
             print_cond(stmt->info.cond.cond, proc_id, 0, 0, str, "");
 
             // Print then statements
-            print_stmts(stmt->info.cond.then_branch, l, proc_id);
+            print_stmts(stmt->info.cond.then_branch, proc_id);
 
             // Print labels
             char endIfLabel[80];
@@ -413,7 +445,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
                 // Do False
                 printf("%s:\n", str);
 
-                print_stmts(stmt->info.cond.else_branch, l, proc_id);
+                print_stmts(stmt->info.cond.else_branch, proc_id);
             }
         
             // print label
@@ -443,7 +475,7 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
             print_cond(stmt->info.loop.cond, proc_id, 0, 1, top, loopbreak);
 
             // Print statements
-            print_stmts(stmt->info.loop.body, l, proc_id);
+            print_stmts(stmt->info.loop.body, proc_id);
 
             // Print unconditional branch
             printf("branch_uncond %s\n", top);
@@ -455,23 +487,23 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
             break;
         }
         case STMT_READ:
-            print_read(stmt, l, proc_id);
+            print_read(stmt, proc_id);
             break;      
         case STMT_READ_ARRAY:
-            print_read_array(stmt, l, proc_id);
+            print_read_array(stmt, proc_id);
             break;
         case STMT_WRITE:
-            print_write(stmt, l, proc_id);
+            print_write(stmt, proc_id);
             break;
         case STMT_FNCALL:
-            print_fncall(stmt, l, proc_id);
+            print_fncall(stmt, proc_id);
             break;
     }
 }
 /* 
     Non-array assignment 
 */
-static void print_assign(Assign assign, int l, char* proc_id) {
+void print_assign(Assign assign, char* proc_id) {
     int ID_type;
     int expr_type;
     int slot;
@@ -525,7 +557,7 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 /* 
     Non-array read 
 */
-static void print_read(Stmt stmt, int l, char* proc_id) {
+void print_read(Stmt stmt, char* proc_id) {
     printf("#read");
     printf("\n");
     //Get the type and stack number from symbol table
@@ -553,7 +585,7 @@ static void print_read(Stmt stmt, int l, char* proc_id) {
 }
 
 /* read in array */
-void print_read_array(Stmt stmt, int l, char* proc_id) {
+void print_read_array(Stmt stmt, char* proc_id) {
     printf("# read\n");
     Type ID_type;
     ID_type = getType(proc_id,stmt->info.array.id);
@@ -575,13 +607,13 @@ void print_read_array(Stmt stmt, int l, char* proc_id) {
 }
 
 /* write function */
-static void print_write(Stmt stmt, int l, char* proc_id) {
+void print_write(Stmt stmt, char* proc_id) {
     printf("# write\n");
     print_write_expr(stmt->info.write, 1, proc_id);
     printf("\n");
 }
 
-static void print_write_expr(Expr expr, int depth, char* proc_id) {
+void print_write_expr(Expr expr, int depth, char* proc_id) {
     switch (expr->kind) {
         int ID_type = 0;
         int ID_type2 = 0;
@@ -779,7 +811,7 @@ void print_unop_string(int unop, int reg, int ID){
 
 }
 
-static void print_write_constant(Constant constant) {
+void print_write_constant(Constant constant) {
     switch (constant.type) {
         case BOOL_CONSTANT:
             printf("int_const r0, %d", constant.val.bool_val);
@@ -854,7 +886,7 @@ int print_expr(Expr expr, int reg, char* proc_id) {
     return curr_reg;        
 }
 
-static void print_constant(Constant constant, int reg) {
+void print_constant(Constant constant, int reg) {
     switch (constant.type) {
         case BOOL_CONSTANT:
             
@@ -987,7 +1019,7 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
     return curr_reg;        
 }
 
-static void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* callee) {
+void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* callee) {
     Expr first = exprs->first;
     Exprs rest = exprs->rest;
     if (first) {
@@ -997,7 +1029,7 @@ static void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* c
         }
     }
 }
-static void print_exprs(Exprs exprs,int reg, char* procName) {
+void print_exprs(Exprs exprs,int reg, char* procName) {
     Expr first = exprs->first;
     Exprs rest = exprs->rest;
     if (first) {
@@ -1009,7 +1041,7 @@ static void print_exprs(Exprs exprs,int reg, char* procName) {
 }
 
 /* non-main function call */
-static void print_fncall(Stmt stmt, int l, char* procName) {
+void print_fncall(Stmt stmt, char* procName) {
     printf("# fncall\n");
     if(stmt->info.fncall.args)
         print_args(stmt->info.fncall.args,0,procName,0,stmt->info.fncall.id);
@@ -1017,7 +1049,7 @@ static void print_fncall(Stmt stmt, int l, char* procName) {
 
 }
 
-static Procs sort_procs(Procs procs) {
+Procs sort_procs(Procs procs) {
     Procs cur_node = procs;
     Proc tmp;
 
