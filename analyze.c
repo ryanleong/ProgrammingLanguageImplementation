@@ -325,6 +325,7 @@ void analyze_stmt(Stmt stmt, char* procName)
 void analyze_assign(Assign assign, char* procName)
 {
     analyze_expr(assign.expr, procName);
+    getExprType(assign.expr, procName);
     int r = checkType(procName, assign.id, 
         getExprType(assign.expr, procName));
 
@@ -376,6 +377,7 @@ Type getArrayType(Type type)
 void analyze_assignArray(Assign assign, char* procName)
 {
     analyze_expr(assign.expr, procName);
+    getExprType(assign.expr, procName);
     int r = checkType(procName, assign.id, 
              getArrayType(getExprType(assign.expr, procName)));
     if(getType(procName,assign.id)==FLOAT_ARRAY_TYPE &&
@@ -440,24 +442,21 @@ void analyze_read(Stmt stmt, char* procName)
               stmt->info.read, stmt->lineno);
         errorNum++;
     }
+    Type type = getType(procName, stmt->info.read);
+    if(type == INT_ARRAY_TYPE||type == FLOAT_ARRAY_TYPE||
+            type == BOOL_ARRAY_TYPE)
+    {
+         printf("use array name wrongly.\n");
+         errorNum++;
+    }
 }
 /*
     analyzing write statements of procedure
 */
 void analyze_write(Stmt stmt, char* procName)
 {
-    Expr expr = stmt->info.write;
+    getExprType(stmt->info.write, procName);
     analyze_expr(stmt->info.write, procName);
-    if(expr->kind == EXPR_ID)
-    {
-        Type type = getType(procName, expr->id);
-        if(type == INT_ARRAY_TYPE||type == FLOAT_ARRAY_TYPE||
-            type == BOOL_ARRAY_TYPE)
-        {
-            printf("write to array name.\n");
-            errorNum++;
-        }
-    }
 }
 /*
     analyzing function call statements of procedure
@@ -514,6 +513,11 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
     if(isParamRef(callee, paramNum)==1)
     {
         // ref parameters
+        if (arg->kind != EXPR_ID&& arg->kind!=EXPR_ARRAY)
+        {
+            printf("ref parameter is not a scaler.\n");
+            errorNum++;
+        }
         if((getParamType(callee, paramNum) != getExprType(arg, procName)) &&
             (getArrayType(getParamType(callee, paramNum)) != 
                               getExprType(arg, procName)))
@@ -554,6 +558,13 @@ void analyze_expr(Expr expr, char* procName)
             {
                 printf("no declaration of %s in line %d.\n", 
                                    expr->id, expr->lineno);
+                errorNum++;
+            }
+            Type type = getType(procName, expr->id);
+            if(type == INT_ARRAY_TYPE||type == FLOAT_ARRAY_TYPE||
+                type == BOOL_ARRAY_TYPE)
+            {
+                printf("use array name wrongly.\n");
                 errorNum++;
             }
             break;
@@ -633,7 +644,7 @@ Type getExprType(Expr expr, char* procName)
                 exprType =  ERROR_TYPE;
             }
             else if((getExprType(expr->e1, procName)==BOOL_TYPE||
-                     getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE) && 
+                     getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE) ||
                       (getExprType(expr->e2, procName)==BOOL_TYPE||
                         getExprType(expr->e2, procName)==BOOL_ARRAY_TYPE))
             {
@@ -703,7 +714,7 @@ Type getExprType(Expr expr, char* procName)
                     exprType = BOOL_TYPE;
             }
             else if((getExprType(expr->e1, procName)==BOOL_TYPE||
-                     getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE)&& 
+                     getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE)||
                       (getExprType(expr->e2, procName)==BOOL_TYPE||
                         getExprType(expr->e2, procName)==BOOL_ARRAY_TYPE))
             {
