@@ -16,7 +16,7 @@
 #include "std.h"
 #include "analyze.h"
 #include "missing.h"
-#include "pretty.h"
+//#include "pretty.h"
 
 const char  *progname;
 const char  *iz_infile;

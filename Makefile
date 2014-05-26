@@ -1,4 +1,4 @@
-HDR =	wiz.h piz.h ast.h analyze.h std.h missing.h symbol.h pretty.h
+HDR =	wiz.h piz.h ast.h analyze.h std.h missing.h symbol.h
 
 OBJ =	wiz.o piz.o liz.o ast.o analyze.o std.o symbol.o pretty.o
 
