@@ -446,7 +446,18 @@ void analyze_read(Stmt stmt, char* procName)
 */
 void analyze_write(Stmt stmt, char* procName)
 {
+    Expr expr = stmt->info.write;
     analyze_expr(stmt->info.write, procName);
+    if(expr->kind == EXPR_ID)
+    {
+        Type type = getType(procName, expr->id);
+        if(type == INT_ARRAY_TYPE||type == FLOAT_ARRAY_TYPE||
+            type == BOOL_ARRAY_TYPE)
+        {
+            printf("write to array name.\n");
+            errorNum++;
+        }
+    }
 }
 /*
     analyzing function call statements of procedure
