@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------
-    A pretty-printer for Wiz programs.
+    A code generator for Wiz programs.
     For use in the COMP90045 project 2014.
 
     Team:       Bandicoot 

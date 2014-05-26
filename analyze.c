@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------
- Semantic analyzing for the Wiz programs.
+ Semantic analyzer for the Wiz programs.
  For use in the COMP90045 project 2014.
 
     Team:       Bandicoot 

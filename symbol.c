@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------
- Declarations for the symbol table for the Wiz programs.
+ A symbol table for the Wiz programs.
  For use in the COMP90045 project 2014.
 
     Team:       Bandicoot 
@@ -42,70 +42,6 @@ ProcList *LastProc = NULL;
 
 ProcList* findProc(char* procName);
 
-void test() {
-    printf("\n\n");
-    
-//    addDecl("getName", "sdf", 2, 2);
-//    addDecl("main", "stuff", 1, 3);
-//    addDecl("main", "things", STRING_TYPE, 3);
-//    addDecl("getName", "9393", 2, 2);
-//
-//    printf("%d\n", getType("getName", "93933"));
-
-
-    addProc("main");
-    addProc("test");
-    // addProc("dsfdsf");
-
-    printf("EXIST: %d\n", procExist("main1"));
-
-    addDecl("main", "temp", INT_TYPE, 0, 0, 0);
-    addDecl("main", "temp", STRING_TYPE, 0, 1, 0);
-    addDecl("main", "tempd", INT_TYPE, 1, 1, 1);
-    addDecl("test", "d", BOOL_TYPE, 0, 1, -1);
-
-    //addArray("main", "temp1", INT_ARRAY_TYPE, 2, 5, 2);
-
-    printf("ArraySize: %d, arrayDimension: %d\n", getArraySize("main", "temp1"), getArrayDimension("main", "temp1"));
-    
-
-    // printf("Type compare: %d\n", checkType("test", "dd", BOOL_TYPE));
-    // printf("Stack Size of main: %d\n", getStackSize("main"));
-    // printf("Stack Slot No.: %d", getStackSlotNum("main", "tempd"));
-
-    // printf("temp isParamRef: %d\n", isParamRef("main", 0));
-    // printf("tempd isParamRef: %d\n", isParamRef("main", 1));
-
-    //////////////////////////////////////////////////////
-    // Print out everything
-    
-    printf("\n");
-    
-    while(ListofProcs) {
-        printf("ProcName: %s\n", ListofProcs->procName);
-
-        printf("Variables:\n");
-        Declaration *d = ListofProcs->firstDecl;
-
-        while(d) {
-        	if(d->type == INT_ARRAY_TYPE || d->type == FLOAT_ARRAY_TYPE || d->type == BOOL_ARRAY_TYPE) {
-        		printf("\tVarName: %s, Type: %d, size: %d, dimension: %d\n", d->name, d->type, d->arraySize, d->arrayDimension);
-        	}
-        	else {
-        		printf("\tVarName: %s, Type: %d, isRef: %d, paramNum: %d\n", d->name, d->type, d->isRef, d->paramNum);	
-        	}
-
-            
-            d = d->next;
-        }
-        
-        printf("\n");
-
-        ListofProcs = ListofProcs->nextProc;
-    }
-    
-    printf("\n\n");
-}
 
 ProcList* findProc(char* procName) {
     // Set pointer to current proc
