@@ -274,7 +274,7 @@ Type print_cond(Expr expr, char* proc_id, int reg,
         case EXPR_ID: {
             Type exprType = getType(proc_id,expr->id);
 
-            printf("load r%d, %d\n", reg, exprType);
+            printf("load r%d, %d\n", reg, getStackSlotNum(proc_id, expr->id));
 
             // Print branch on false based on while or if
             if (stmt_type == 0) {
@@ -545,8 +545,6 @@ void print_assign(Assign assign, char* proc_id) {
         if (ID_type == 2 && expr_type == 1){
             slot = getStackSlotNum(proc_id, assign.id);
             printf("#assignment\n");
-            printf("load r1, %d\n", slot);
-            printf("load_indirect r%d, r1\n", reg);
             print_expr(assign.expr, reg, proc_id);
             printf("int_to_real r0, r0\n");
             printf("load r1, %d\n", slot);
@@ -559,8 +557,6 @@ void print_assign(Assign assign, char* proc_id) {
             (ID_type == 0 && expr_type == 0)){
             slot = getStackSlotNum(proc_id, assign.id); 
             printf("#assignment\n");
-            printf("load r1, %d\n", slot);
-            printf("load_indirect r%d, r1\n", reg);
             print_expr(assign.expr, reg, proc_id);
             printf("load r1, %d\n", slot);
             printf("store_indirect r1, r%d\n", reg);
