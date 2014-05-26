@@ -669,10 +669,23 @@ Type getExprType(Expr expr, char* procName)
                 exprType =  getExprType(expr->e1, procName);
             break;
         case EXPR_RELOP:
+            
             if(getExprType(expr->e1, procName)==ERROR_TYPE || 
                 getExprType(expr->e2, procName)==ERROR_TYPE)
             {
                 exprType =  ERROR_TYPE;
+            }
+            else if (expr->relop == RELOP_EQ || expr->relop == RELOP_NE)
+            {
+                if(getExprType(expr->e1, procName) != 
+                    getExprType(expr->e2, procName) &&
+                     getExprType(expr->e1, procName) != 
+                      getArrayType(getExprType(expr->e2, procName))&&
+                       getArrayType(getExprType(expr->e1, procName))!=
+                        getExprType(expr->e2, procName))
+                    printf("relation expression have different operands type.\n");
+                    errorNum++;
+                    exprType =  ERROR_TYPE;
             }
             else if((getExprType(expr->e1, procName)==BOOL_TYPE||
                      getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE)&& 
@@ -681,20 +694,6 @@ Type getExprType(Expr expr, char* procName)
             {
                 // relation operator must not have bool type operand
                 printf("wrong relation expression operand type of bool.\n");
-                errorNum++;
-                exprType =  ERROR_TYPE;
-            }
-            else if((getExprType(expr->e1, procName)==INT_TYPE||
-                      getExprType(expr->e1, procName)==INT_ARRAY_TYPE) && 
-                       (getExprType(expr->e2, procName)==FLOAT_TYPE||
-                         getExprType(expr->e2, procName)==FLOAT_ARRAY_TYPE)||
-                    (getExprType(expr->e1, procName)==FLOAT_TYPE||
-                      getExprType(expr->e1, procName)==FLOAT_ARRAY_TYPE)&&
-                       (getExprType(expr->e2, procName)==INT_TYPE||
-                         getExprType(expr->e2, procName)==INT_ARRAY_TYPE))
-            {
-                // relation operator must have same type operands
-                printf("relation expression have different operands type.\n");
                 errorNum++;
                 exprType =  ERROR_TYPE;
             }
