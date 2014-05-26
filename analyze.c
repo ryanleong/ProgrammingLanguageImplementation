@@ -683,9 +683,11 @@ Type getExprType(Expr expr, char* procName)
                       getArrayType(getExprType(expr->e2, procName))&&
                        getArrayType(getExprType(expr->e1, procName))!=
                         getExprType(expr->e2, procName))
+                {
                     printf("relation expression have different operands type.\n");
                     errorNum++;
                     exprType =  ERROR_TYPE;
+                }
             }
             else if((getExprType(expr->e1, procName)==BOOL_TYPE||
                      getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE)&& 
@@ -701,7 +703,7 @@ Type getExprType(Expr expr, char* procName)
                 // relation expression is bool type
                 exprType =  BOOL_TYPE;
             break;
-            case EXPR_ARRAY:
+        case EXPR_ARRAY:
                 exprType = getType(procName, expr->id);
             break;
         }
