@@ -325,8 +325,12 @@ void analyze_stmt(Stmt stmt, char* procName)
 void analyze_assign(Assign assign, char* procName)
 {
     analyze_expr(assign.expr, procName);
-    int r = checkType(procName, assign.id, getExprType(assign.expr, procName));
-    int j = getArrayType(getType(procName,assign.id)) == getExprType(assign.expr, procName) ? 1:0;
+    int r = checkType(procName, assign.id, 
+        getExprType(assign.expr, procName));
+
+    int j = getArrayType(getType(procName,assign.id)) == 
+        getExprType(assign.expr, procName) ? 1:0;
+
     if(getType(procName,assign.id)==FLOAT_TYPE && 
         getExprType(assign.expr, procName)==INT_TYPE ||
          getType(procName,assign.id)==FLOAT_TYPE && 
@@ -503,7 +507,8 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
             (getArrayType(getParamType(callee, paramNum)) != 
                               getExprType(arg, procName)))
         {
-            printf("No.%d parameter of function call %s has wrong type.\n",paramNum+1, callee);
+            printf("No.%d parameter of function call %s has wrong type.\n",
+                paramNum+1, callee);
             errorNum++;
         }
     }
@@ -520,7 +525,8 @@ void analyze_arg(Expr arg, char* callee, int paramNum, char* procName)
             {}
             else
             {
-                printf("No.%d parameter of function call %s has wrong type.\n",paramNum+1, callee);
+                printf("No.%d parameter of function call %s has wrong type.\n",
+                    paramNum+1, callee);
                 errorNum++;
             }
         }

@@ -12,7 +12,7 @@
 // Add new array
 // Return 1 if success, 0 if failed
 int addArray(char*, char*, Type, int, 
-	int, int, Intervals*);
+    int, int, Intervals*);
 
 // Add new declaration
 // Return 1 if success, 0 if failed

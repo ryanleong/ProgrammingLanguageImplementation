@@ -14,7 +14,7 @@ liz.c: liz.l piz.h std.h ast.h
 	flex -s -oliz.c liz.l
 
 clean:
-	/bin/rm $(OBJ) piz.c piz.h piz.output liz.c
+	/bin/rm $(OBJ) piz.c piz.h piz.output liz.c wiz
 
 $(OBJ):	$(HDR)
 

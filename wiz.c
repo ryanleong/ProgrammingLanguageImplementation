@@ -3,10 +3,10 @@
     For use the COMP90045 project 2014.
     See usage for details.
 
-    Team:       Master Minds
-    Members:    629204 Ye He
-                547108 Yi Xia
-                645452 Rongzuo Liu 
+    Team:       Bandicoot 
+    Members:    Wee Lee Tan     377990
+                Rui Cheng       664000
+                Ryan Leong      395463
 -----------------------------------------------------------------------*/
 
 #include <string.h>
@@ -32,12 +32,9 @@ int main(int argc, char **argv) {
     FILE *fp = stdout;
     BOOL pretty_print_only;
 
-    progname = argv[0];
-    pretty_print_only = FALSE;
-
     /* Process command line */
 
-    if ((argc < 2) || (argc > 3)) {
+    if (argc != 2) {
         usage();
         exit(EXIT_FAILURE);
     }
@@ -45,10 +42,6 @@ int main(int argc, char **argv) {
     if (argc == 2)
         in_filename = argv[1];
 
-    if (argc == 3 && streq(argv[1],"-p")) {
-        pretty_print_only = TRUE;
-        in_filename = argv[2];
-    }
     
     iz_infile = in_filename;
     yyin = fopen(in_filename, "r");
@@ -61,20 +54,18 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (pretty_print_only) 
-        if (!parsed_program)
-            report_error_and_exit("Empty file");
-        else {
-            if(analyze(fp, parsed_program)==0)
-                codegen_prog(fp, parsed_program);
-		}
-    else
-        report_error_and_exit("Unable to generate code");
+    if (!parsed_program)
+        report_error_and_exit("Empty file");
+    else {
+        if(analyze(fp, parsed_program)==0)
+            codegen_prog(fp, parsed_program);
+    }
+
 
     return 0;
 }
 
 static void usage(void) {
-    printf("usage: wiz [-p] iz_source_file\n");
+    printf("usage: wiz iz_source_file\n");
 }
 

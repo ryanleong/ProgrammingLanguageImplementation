@@ -260,7 +260,8 @@ void print_stmts(Stmts stmts, char* proc_id) {
 /* 
     Print Conditions of while or if statements
 */
-Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
+Type print_cond(Expr expr, char* proc_id, int reg, 
+    int stmt_type, char* label1, char* label2) {
 
     // Print label if while loop
     if (stmt_type == 1) {
@@ -380,13 +381,13 @@ Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, 
 /* 
     Print array assignments
 */
-print_assign_array(Assign assign, Exprs expr, char* proc_id) {
+void print_assign_array(Assign assign, Exprs expr, char* proc_id) {
 
     // Calculate offset
     int reg = calculate_offset(expr, 0, assign.id, proc_id);
     
     int next_reg = reg+1;
-    print_exprs(expr, next_reg, proc_id);
+    print_expr(assign.expr, next_reg, proc_id);
 
     printf("store_indirect r%d, r%d\n", reg, next_reg);
 }
@@ -402,7 +403,8 @@ void print_stmt(Stmt stmt, char* proc_id) {
             print_assign(stmt->info.assign, proc_id);
             break;      
         case STMT_ASSIGN_ARRAY:
-            print_assign_array(stmt->info.assign, stmt->info.assign.exprs, proc_id);
+            print_assign_array(stmt->info.assign, 
+                stmt->info.assign.exprs, proc_id);
             break;
         case STMT_COND:{
             printf("#if\n");
@@ -601,7 +603,8 @@ void print_read_array(Stmt stmt, char* proc_id) {
             printf("call_builtin read_real \n"); //with a function
             break; 
     }
-    int reg = calculate_offset(stmt->info.array.exprs, 1, stmt->info.array.id, proc_id);
+    int reg = calculate_offset(stmt->info.array.exprs, 1, 
+        stmt->info.array.id, proc_id);
     printf("store_indirect r%d, r0\n", reg);
     printf("\n");
 }
@@ -697,7 +700,8 @@ void print_write_expr(Expr expr, int depth, char* proc_id) {
     }
 }
 
-void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2){
+void print_binop_string(int binop, int curr_reg, 
+    int next_reg, int ID1, int ID2){
     int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
     if (ID1 == 1 && ID2 == 2){
         printf("int_to_real r%d, r%d\n", curr_reg, curr_reg);
@@ -708,85 +712,109 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
     switch(binop){
         case BINOP_ADD:
             if (ID >= 3){
-                printf("add_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("add_real r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
             }
             else{
-                printf("add_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("add_int r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
             }
             break;
         case BINOP_SUB:
             if (ID >= 3){
-                printf("sub_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("sub_real r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
                 }
             else{
-                printf("sub_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("sub_int r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
             }
             break;
         case BINOP_MUL:
             if (ID >= 3){
-                printf("mul_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("mul_real r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
                 }
             else{
-                printf("mul_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("mul_int r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
                 }
             break;
         case BINOP_DIV:
             if (ID >= 3){
-                printf("div_real r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("div_real r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
                 }
             else{
-                printf("div_int r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+                printf("div_int r%d, r%d, r%d \n", 
+                    curr_reg, curr_reg, next_reg);
                 }
             break;
         case BINOP_AND:
-            printf("and r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+            printf("and r%d, r%d, r%d \n", 
+                curr_reg, curr_reg, next_reg);
             break;
         case BINOP_OR:
-            printf("or r%d, r%d, r%d \n", curr_reg, curr_reg, next_reg);
+            printf("or r%d, r%d, r%d \n", 
+                curr_reg, curr_reg, next_reg);
             break;      
     }
 }
 
-void print_relop_string(int relop, int curr_reg, int next_reg, int ID1, int ID2){
+void print_relop_string(int relop, int curr_reg, 
+    int next_reg, int ID1, int ID2){
+
     int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
     switch(relop){
         case RELOP_EQ:
             if (ID >= 3){
-                printf("cmp_eq_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
+                printf("cmp_eq_real r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);
             }
             else{
-                printf("cmp_eq_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
+                printf("cmp_eq_int r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);
             }
             break;
         case RELOP_NE:
             if (ID >= 3){
-                printf("cmp_ne_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_ne_real r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             else{
-                printf("cmp_ne_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_ne_int r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             break;
         case RELOP_LT:
             if (ID >= 3){
-                printf("cmp_lt_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_lt_real r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             else{
-                printf("cmp_lt_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_lt_int r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             break;
         case RELOP_GT:
             if (ID >= 3){
-                printf("cmp_gt_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_gt_real r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             else{
-                printf("cmp_gt_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_gt_int r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             break;
         case RELOP_LE:
             if (ID >= 3){
-                printf("cmp_le_real r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_le_real r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             else{
-                printf("cmp_le_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);}
+                printf("cmp_le_int r%d, r%d, r%d\n", 
+                    curr_reg, curr_reg, next_reg);}
             break;
         case RELOP_GE:
             if (ID >= 3){
-                printf("cmp_ge_real r%d, r%d, r%d\n",curr_reg, curr_reg, next_reg);}
+                printf("cmp_ge_real r%d, r%d, r%d\n",
+                    curr_reg, curr_reg, next_reg);}
             else{
-                printf("cmp_ge_int r%d, r%d, r%d\n",curr_reg, curr_reg, next_reg);}
+                printf("cmp_ge_int r%d, r%d, r%d\n",
+                    curr_reg, curr_reg, next_reg);}
             break;
     }
 }
@@ -865,7 +893,8 @@ int print_expr(Expr expr, int reg, char* proc_id) {
             ID_type2 = getExprType(expr->e2, proc_id);
             curr_reg = print_expr(expr->e1, curr_reg, proc_id);
             next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
-            print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
+            print_binop_string(expr->binop, curr_reg, 
+                next_reg, ID_type, ID_type2);
             break;
         case EXPR_RELOP:
             ID_type = getExprType(expr->e1, proc_id);
@@ -873,14 +902,16 @@ int print_expr(Expr expr, int reg, char* proc_id) {
             
             curr_reg = print_expr(expr->e1, curr_reg, proc_id);
             next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
-            print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
+            print_relop_string(expr->relop, curr_reg, 
+                next_reg, ID_type, ID_type2);
             break;
         case EXPR_UNOP: 
             ID_type = getExprType(expr->e1, proc_id);
             print_unop_string(expr->unop, curr_reg, ID_type);
             break;
         case EXPR_ARRAY:
-            curr_reg = calculate_offset(expr->es, curr_reg, expr->id, proc_id);
+            curr_reg = calculate_offset(expr->es, curr_reg, 
+                expr->id, proc_id);
             break;  
             }
     return curr_reg;        
@@ -947,7 +978,8 @@ int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
     }
     curr_reg = reg;
     while (currentD <= dimension){
-        print_offset(next_reg, high_bounds[currentD-1],low_bounds[currentD-1]);
+        print_offset(next_reg, high_bounds[currentD-1],
+            low_bounds[currentD-1]);
         next_reg++;
         currentD++;
     }
@@ -963,7 +995,8 @@ int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
     curr_reg = reg;
     int loop = 0;
     while (loop < dimension-1){
-        printf("add_int r%d, r%d, r%d\n", curr_reg, curr_reg, curr_reg+loop+1);
+        printf("add_int r%d, r%d, r%d\n", curr_reg, curr_reg, 
+            curr_reg+loop+1);
         loop++;
     }
     printf("load_address r%d, %d\n", curr_reg+1, stackNo);
@@ -972,7 +1005,9 @@ int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
     return curr_reg;
 }
 /* generate code from function call arguments*/
-int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
+int print_arg(Expr expr, int reg, char* proc_id,
+    int paramNum,char* callee) {
+
     int curr_reg = reg;
     int next_reg;
     int ID_type;
@@ -1000,7 +1035,8 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
             ID_type2 = getExprType(expr->e2, proc_id);
             curr_reg = print_expr(expr->e1, curr_reg, proc_id);
             next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
-            print_binop_string(expr->binop, curr_reg, next_reg, ID_type, ID_type2);
+            print_binop_string(expr->binop, curr_reg, 
+                next_reg, ID_type, ID_type2);
             break;
         case EXPR_RELOP:
             ID_type = getExprType(expr->e1, proc_id);
@@ -1008,7 +1044,8 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
             
             curr_reg = print_expr(expr->e1, curr_reg, proc_id);
             next_reg = print_expr(expr->e2, curr_reg + 1, proc_id);
-            print_relop_string(expr->relop, curr_reg, next_reg, ID_type, ID_type2);
+            print_relop_string(expr->relop, curr_reg, 
+                next_reg, ID_type, ID_type2);
             break;
         case EXPR_UNOP: 
             ID_type = getExprType(expr->e1, proc_id);
@@ -1019,7 +1056,9 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
     return curr_reg;        
 }
 
-void print_args(Exprs exprs,int reg, char* procName, int paramNum,char* callee) {
+void print_args(Exprs exprs,int reg, char* procName, 
+    int paramNum,char* callee) {
+    
     Expr first = exprs->first;
     Exprs rest = exprs->rest;
     if (first) {
