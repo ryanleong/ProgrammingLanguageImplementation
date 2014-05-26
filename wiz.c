@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
     else {
         if(analyze(fp, parsed_program)==0)
             codegen_prog(fp, parsed_program);
+        else
+            report_error_and_exit("Unable to generate code");
     }
 
 

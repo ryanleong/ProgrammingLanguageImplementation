@@ -383,13 +383,19 @@ Type print_cond(Expr expr, char* proc_id, int reg,
 */
 void print_assign_array(Assign assign, Exprs expr, char* proc_id) {
 
-    // Calculate offset
-    int reg = calculate_offset(expr, 0, assign.id, proc_id);
-    
+    // calculate offset
+    printf("#assignment\n");
+    Type ID_type;
+    ID_type = getExprType(assign.expr, proc_id);
+    int reg = print_expr(assign.expr, 0, proc_id);
     int next_reg = reg+1;
-    print_expr(assign.expr, next_reg, proc_id);
-
-    printf("store_indirect r%d, r%d\n", reg, next_reg);
+    if (ID_type == INT_ARRAY_TYPE || ID_type == FLOAT_ARRAY_TYPE 
+        || ID_type == BOOL_ARRAY_TYPE){
+        printf("load_indirect r%d, r%d\n", next_reg, reg);
+        next_reg = next_reg+1;
+    }
+    next_reg = calculate_offset(expr, next_reg, assign.id, proc_id);
+    printf("store_indirect r%d, r%d\n", next_reg, next_reg-1);
 }
 
 /* 
@@ -509,6 +515,8 @@ void print_assign(Assign assign, char* proc_id) {
     int ID_type;
     int expr_type;
     int slot;
+    int reg = 0;
+    //int next_reg = reg +1;
     ID_type = getType(proc_id,assign.id);
     expr_type = getExprType(assign.expr, proc_id);
     if (isRef(proc_id, assign.id)==0){
@@ -535,10 +543,13 @@ void print_assign(Assign assign, char* proc_id) {
         if (ID_type == 2 && expr_type == 1){
             slot = getStackSlotNum(proc_id, assign.id);
             printf("#assignment\n");
-            print_expr(assign.expr, 0, proc_id);
+            printf("load r1, %d\n", slot);
+            printf("load_indirect r%d, r1\n", reg);
+            print_expr(assign.expr, reg, proc_id);
             printf("int_to_real r0, r0\n");
             printf("load r1, %d\n", slot);
-            printf("store_indirect r1, r0\n");
+            
+            printf("store_indirect r1, r%d\n", reg);
             printf("\n");
         }
         
@@ -547,9 +558,11 @@ void print_assign(Assign assign, char* proc_id) {
             (ID_type == 0 && expr_type == 0)){
             slot = getStackSlotNum(proc_id, assign.id); 
             printf("#assignment\n");
-            print_expr(assign.expr, 0, proc_id);
             printf("load r1, %d\n", slot);
-            printf("store_indirect r1, r0\n");
+            printf("load_indirect r%d, r1\n", reg);
+            print_expr(assign.expr, reg, proc_id);
+            printf("load r1, %d\n", slot);
+            printf("store_indirect r1, r%d\n", reg);
             printf("\n");
         }
     }
@@ -883,7 +896,9 @@ int print_expr(Expr expr, int reg, char* proc_id) {
         case EXPR_ID:
             ID_type = getType(proc_id,expr->id);
             stackNo = getStackSlotNum(proc_id, expr->id);
-            printf("load r%d, %d\n", curr_reg,stackNo);
+            if (isRef(proc_id, expr->id)==0){
+                printf("load r%d, %d\n", curr_reg,stackNo);
+            }
             break;
         case EXPR_CONST:
             print_constant(expr->constant, curr_reg);
@@ -1018,14 +1033,21 @@ int print_arg(Expr expr, int reg, char* proc_id,
         case EXPR_ID:
             ID_type = getType(proc_id,expr->id);
             stackNo = getStackSlotNum(proc_id, expr->id);
-            if(isParamRef(callee,paramNum)==0){
+            ID_type2 = getParamType(callee, paramNum);
+
+            if(isParamRef(callee,paramNum)==0) {
 
                 printf("load r%d, %d\n", curr_reg,stackNo);
+
+                if ((ID_type + ID_type2) == 3){
+                    printf("int_to_real r%d, r%d\n", curr_reg, curr_reg);
+                }
             }
             if(isParamRef(callee,paramNum)==1){
 
                 printf("load_address r%d, %d\n", curr_reg,stackNo);
             }
+
             break;
         case EXPR_CONST:
             print_constant(expr->constant, curr_reg);
