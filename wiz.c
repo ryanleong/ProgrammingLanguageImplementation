@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             report_error_and_exit("Empty file");
         else {
             if(analyze(fp, parsed_program)==0)
-			     pretty_prog(fp, parsed_program);
+                codegen_prog(fp, parsed_program);
 		}
     else
         report_error_and_exit("Unable to generate code");
