@@ -44,6 +44,7 @@ static void print_proc(Proc proc) {
 	printf("proc_%s:", proc->header->id);
 	int stack_count = getStackSize(proc->header->id);
 	printf("\n");
+	//print_header(proc->header);
 	printf("#prologue\n");
 	if (proc->decls||proc->header->params) {
 		//Get the number of declarations.
@@ -51,9 +52,12 @@ static void print_proc(Proc proc) {
 		printf("\n");
 		if(proc->header->params)
 			print_params(proc->header->params,proc->header->id);
+		//IF got int.
+		//Do for float too
 		printf("int_const r0, 0\n");
 		printf("real_const r1, 0.0\n");
 		printf("\n");
+		//Can get from tree?
 		
 		if(proc->decls)
 			print_decls(proc->decls, 1, proc->header->id);
@@ -62,6 +66,7 @@ static void print_proc(Proc proc) {
 	if (proc->body) {
 		print_stmts(proc->body, 1, proc->header->id);
 	}
+	//printf("end\n");
 	printf("#epilogue\n");
 	if (stack_count != 0) 
 		printf("pop_stack_frame %d\n", stack_count);
@@ -103,28 +108,31 @@ static void print_params(Params params, char* procName) {
 	}
 }
 
-//Printing declarations codes
+
 static void print_decl(Decl decl, int l, char* proc_id) {
+	//print_indent(l);
 	int slot;
 	slot = getStackSlotNum(proc_id, decl->id);
 	switch (decl->type) {
 		case BOOL_TYPE:
-			
+			//printf("bool %s;\n", decl->id);
 			printf("store %d, r0", slot);
 			printf("\n");
 			break;
 		case INT_TYPE:
-			
+			//printf("int %s;\n", decl->id);
 			printf("store %d, r0", slot);
 			printf("\n");
 			break;
 		case FLOAT_TYPE:
-			
+			//printf("float %s;\n", decl->id);
 			printf("store %d, r1", slot);
 			printf("\n");
 			break;
 		case INT_ARRAY_TYPE:{
+			// Get from tree
 			int i;
+			//printf("%d\n",getArraySize(proc_id, decl->id));
 			for (i = 0; i < getArraySize(proc_id, decl->id); i++){
 				printf("store %d, r0", slot);
 				printf("\n");
@@ -153,8 +161,6 @@ static void print_decl(Decl decl, int l, char* proc_id) {
 	}
 }
 
-
-//Remove if unused
 static void print_intervals(Intervals intervals) {
 	Interval first = intervals->first;
 	Intervals rest = intervals->rest;
@@ -182,10 +188,46 @@ static void print_stmts(Stmts stmts, int l, char* proc_id) {
 	}
 }
 
-//Print conditional statements
-static Type print_cond(Expr expr, char* proc_id, int reg, 
-			int stmt_type, char* label1, char* label2) {
+// static Type getExprType(Expr expr, char* proc_id) {
 
+// 	if (expr->kind == EXPR_CONST){
+
+// 		// Return constant type
+// 		if (expr->constant.type == FLOAT_CONSTANT) {
+// 			return FLOAT_TYPE;	
+// 		}
+// 		else if (expr->constant.type == INT_CONSTANT){
+// 			return INT_TYPE;
+// 		}
+// 	}
+
+// 	else if (expr->kind == EXPR_ID) {
+// 		// Return var type
+// 		return getType(proc_id,expr->id);
+// 	}
+
+// 	else if (expr->kind == EXPR_BINOP) {
+// 		Type e1Type = getExprType(expr->e1, proc_id);
+// 		Type e2Type = getExprType(expr->e2, proc_id);
+
+// 		// Compare and return expression type
+// 		if (e1Type == INT_TYPE && e2Type == INT_TYPE) {
+// 			return INT_TYPE;
+// 		}
+// 		else if ((e1Type == FLOAT_TYPE && e2Type == FLOAT_TYPE) || 
+// 			(e1Type == INT_TYPE && e2Type == FLOAT_TYPE) ||
+// 			(e1Type == FLOAT_TYPE && e2Type == INT_TYPE)) {
+			
+// 			return FLOAT_TYPE;
+// 		}
+// 	}
+	
+// 	return BOOL_TYPE;
+// }
+
+static Type print_cond(Expr expr, char* proc_id, int reg, int stmt_type, char* label1, char* label2) {
+
+	// TODO Check if e1 or e2 are expressions
 	// Print label if while loop
 	if (stmt_type == 1) {
 		// Add label to branch to at top of loop
@@ -194,16 +236,14 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 
 	switch(expr->kind) {
 		case EXPR_ID: {
-			// Get type of expression
 			Type exprType = getType(proc_id,expr->id);
 			printf("load r%d, %d\n", reg, exprType);
 
 			if (stmt_type == 0) {
-				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// print branch for while
+				// Branch away if false
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -212,15 +252,13 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 		}
 		case EXPR_CONST:
 
-			// print int constant
 			printf("int_const r%d, %d\n", reg, expr->constant.val.bool_val);
 
 			if (stmt_type == 0) {
-				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// print branch for while
+				// Branch away if false
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -239,7 +277,7 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 			break;
 		case EXPR_BINOP: {
 
-			// print binary operations
+
 			reg = print_expr(expr->e1, reg, proc_id);
 			int reg1 = print_expr(expr->e2, reg+1, proc_id);
 			int ID_type = getExprType(expr->e1, proc_id);
@@ -247,11 +285,10 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 			print_binop_string(expr->binop, reg, reg1, ID_type, ID_type2);
 
 			if (stmt_type == 0) {
-				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg, label1);
 			}
 			else if (stmt_type == 1) {
-				// print branch for while
+				// Branch away if false
 				printf("branch_on_false r%d, %s\n", reg, label2);
 			}
 
@@ -259,12 +296,15 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 		}
 		case EXPR_RELOP: {
 
-			// print expressions in if or while condition
 			int reg1 = print_expr(expr->e1, reg, proc_id);
 			int reg2 = print_expr(expr->e2, reg+1, proc_id);
 
 			Type e1Type = getExprType(expr->e1, proc_id);
 			Type e2Type = getExprType(expr->e2, proc_id);
+
+			// Type e1Type = print_cond(expr->e1, proc_id, reg, stmt_type, label1, label2);
+			// reg++;
+			// Type e2Type = print_cond(expr->e2, proc_id, reg, stmt_type, label1, label2);
 
 			Type evalType = -1;
 
@@ -282,18 +322,74 @@ static Type print_cond(Expr expr, char* proc_id, int reg,
 				evalType = BOOL_TYPE;
 			}
 
-			// print relational operation
 			print_relop_string(expr->relop, reg1, reg2, e1Type, e2Type);
 
+			// // Check expression/var/const type
+			// switch(evalType) {
+			// 	case INT_TYPE:
+			// 		// check for RELOP type
+			// 		switch(expr->relop){
+			// 			case RELOP_EQ:
+			// 				printf("cmp_eq_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_NE:
+			// 				printf("cmp_ne_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LT:
+			// 				printf("cmp_lt_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GT:
+			// 				printf("cmp_gt_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LE:
+			// 				printf("cmp_le_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GE:
+			// 				printf("cmp_ge_int r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 		}
+
+			// 		break;
+
+			// 	case FLOAT_TYPE:
+
+			// 		// check for RELOP type
+			// 		switch(expr->relop){
+			// 			case RELOP_EQ:
+			// 				printf("cmp_eq_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_NE:
+			// 				printf("cmp_ne_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LT:
+			// 				printf("cmp_lt_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GT:
+			// 				printf("cmp_gt_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_LE:
+			// 				printf("cmp_le_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 			case RELOP_GE:
+			// 				printf("cmp_ge_real r%d r%d r%d\n", reg1, reg1, reg2);
+			// 				break;
+			// 		}
+
+			// 		break;
+			// 	case BOOL_TYPE:
+			// 		break;
+			// }
+
 			if (stmt_type == 0) {
-				// print branch for ifcond
 				printf("branch_on_false r%d, %s\n", reg1, label1);
 			}
 			else if (stmt_type == 1) {
-				// print branch for while
+				// Branch away if false
 				printf("branch_on_false r%d, %s\n", reg1, label2);
 			}
 
+			
+		
 			break; 
 		}
 	}
@@ -305,13 +401,13 @@ static print_assign_array(Assign assign, Exprs expr, char* proc_id) {
 
 	// calculate offset
 	int reg = calculate_offset(expr, 0, assign.id, proc_id);
-
-	int next_reg = print_expr(expr, 1, proc_id);
+	
+	int next_reg = reg+1;
+	print_exprs(expr, next_reg, proc_id);
 
 	printf("store_indirect r%d, r%d\n", reg, next_reg);
 }
 
-//Printing each statement
 static void print_stmt(Stmt stmt, int l, char* proc_id) {
 	switch (stmt->kind) {
 		case STMT_ASSIGN:
@@ -372,8 +468,6 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 		}
 		case STMT_WHILE:{
 			printf("#while\n");
-
-			// print while labels
 			char whileStr[15];
 			sprintf(whileStr, "%d", loopcount);
 			char top[80];
@@ -405,44 +499,20 @@ static void print_stmt(Stmt stmt, int l, char* proc_id) {
 		case STMT_READ:
 			print_read(stmt, l, proc_id);
 			break;		
-		case STMT_READ_ARRAY: {
-			// print_read_array(stmt, l);
-
-			// calculate offset
-			int reg = calculate_offset(stmt->info.array.exprs, 1, stmt->info.assign.id, proc_id);
-
-			switch(getType(proc_id, stmt->info.assign.id)) {
-				case(INT_ARRAY_TYPE):
-					printf("call_builtin read_int \n");
-					break;
-
-				case(FLOAT_ARRAY_TYPE):
-					printf("call_builtin read_float \n");
-					break;
-
-				case(BOOL_ARRAY_TYPE):
-					printf("call_builtin read_bool \n");
-					break;
-			}
-
-			// Store indirect for array
-			printf("store_indirect r%d, r%d\n", reg, 0);
+		case STMT_READ_ARRAY:
+			print_read_array(stmt, l, proc_id);
 			break;
-		}
 		case STMT_WRITE:
-			// Print write statement
 			print_write(stmt, l, proc_id);
 			break;
 		case STMT_FNCALL:
-			// Print proc calls
 			print_fncall(stmt, l, proc_id);
 			break;
 	}
 }
 
-//Assignment code
 static void print_assign(Assign assign, int l, char* proc_id) {
-
+	//print_indent(l);
 	int ID_type;
 	int expr_type;
 	int slot;
@@ -468,7 +538,6 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 			printf("\n");
 		}
     }
-	//For reference parameters
     else if(isRef(proc_id, assign.id)==1){
     	if (ID_type == 2 && expr_type == 1){
 			slot = getStackSlotNum(proc_id, assign.id);
@@ -494,19 +563,21 @@ static void print_assign(Assign assign, int l, char* proc_id) {
 	
 }
 
-//Read function call
 static void print_read(Stmt stmt, int l, char* proc_id) {
 	
 	printf("#read");
 	printf("\n");
-	print_indent(l);
+	//print_indent(l);
+	//Get the type and stack number from the id
 	Type ID_type;
 	int stackNo;
 	ID_type = getType(proc_id,stmt->info.read);
 	stackNo = getStackSlotNum(proc_id, stmt->info.read);
-	switch (ID_type){					
+	switch (ID_type){			//placeholder			
 		case BOOL_TYPE:
+		//printf("bool %s;\n", decl->id);
 			printf("call_builtin read_bool"); //with a function
+			////////////////////Might need to change to int///////////////////
 			printf("\n");
 			print_indent(l);
 			printf("store %d, r0", stackNo);
@@ -523,26 +594,45 @@ static void print_read(Stmt stmt, int l, char* proc_id) {
 			printf("store %d, r0 \n", stackNo);
 			break; 
 	}
+	//printf("read %s", stmt->info.read);
 	printf("\n");
 }
 
-//Remove if unused
-static void print_read_array(Stmt stmt, int l) {
-	print_indent(l);
-	printf("read %s", stmt->info.array.id);
-	printf("[");
-	printf("];\n");
+void print_read_array(Stmt stmt, int l, char* proc_id) {
+	printf("# read\n");
+	Type ID_type;
+	ID_type = getType(proc_id,stmt->info.array.id);
+	switch (ID_type){					
+		case BOOL_ARRAY_TYPE:
+			printf("call_builtin read_bool"); 
+			printf("\n");
+			break;
+		case INT_ARRAY_TYPE:
+			printf("call_builtin read_int \n"); //with a function
+			break;
+		case FLOAT_ARRAY_TYPE:
+			printf("call_builtin read_real \n"); //with a function
+			break; 
+	}
+	//print_exprs(stmt->info.array.exprs);
+	//int next_reg = reg + 1;
+	//print_exprs(stmt->info.array.exprs, next_reg, proc_id);
+
+	//printf("%d\n",reg);
+	int reg = calculate_offset(stmt->info.array.exprs, 1, stmt->info.array.id, proc_id);
+
+
+	printf("store_indirect r%d, r0\n", reg);
+	printf("\n");
 }
 
-//Write statments
 static void print_write(Stmt stmt, int l, char* proc_id) {
-
+	//print_indent(l);
 	printf("# write\n");
 	print_write_expr(stmt->info.write, 1, proc_id);
 	printf("\n");
 }
 
-//Remove the depth later
 static void print_write_expr(Expr expr, int depth, char* proc_id) {
 	switch (expr->kind) {
 		int ID_type = 0;
@@ -554,8 +644,11 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
 			printf("load r0, %d\n", stackNo);
-			switch (ID_type){					
+			//Look up id in the symbol table to get the type and stack
+			switch (ID_type){			//placeholder			
 				case BOOL_TYPE:
+				//printf("bool %s;\n", decl->id);
+				 //Change the value to lookup for value
 				printf("\n");
 				printf("call_builtin print_bool"); //with a function
 				printf("\n");
@@ -569,6 +662,7 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 				printf("call_builtin print_real \n"); //with a function
 				break; 
 				}
+			//printf("%s", expr->id);
 			break;
 		case EXPR_CONST:
 			print_write_constant(expr->constant);
@@ -612,12 +706,26 @@ static void print_write_expr(Expr expr, int depth, char* proc_id) {
 			}
 			break;
 		case EXPR_ARRAY:
-			calculate_offset(expr->es, 0, expr->id, proc_id);
+			ID_type = getExprType(expr, proc_id);
+			/*printf("%s", expr->id);
+			printf("[");
+			print_exprs(expr->es);
+			printf("]");*/
+			reg = calculate_offset(expr->es, 1, expr->id, proc_id);
+			printf("load_indirect r0, r%d\n", reg);
+			if (ID_type == FLOAT_ARRAY_TYPE){
+				printf("call_builtin print_real \n");
+			}
+			else if (ID_type == INT_ARRAY_TYPE){
+				printf("call_builtin print_int \n");
+			}
+			else{
+				printf("call_builtin print_bool \n");
+			}
 			break;		
 	}
 }
 
-//Binary operators
 void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2){
 	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
 	if (ID1 == 1 && ID2 == 2){
@@ -668,28 +776,31 @@ void print_binop_string(int binop, int curr_reg, int next_reg, int ID1, int ID2)
 	}
 }
 
-//Writing a constant value
 static void print_write_constant(Constant constant) {
 	switch (constant.type) {
 		case BOOL_CONSTANT:
+			//printf("%s", constant.val.bool_val ? "true" : "false");
 			printf("int_const r0, %d", constant.val.bool_val);
 			printf("\n");
 			printf("call_builtin print_bool"); //with a function
 			printf("\n");
 			break;
 		case INT_CONSTANT:
+			//printf("%d", constant.val.int_val);
 			printf("int_const r0, %d", constant.val.int_val);
 			printf("\n");
 			printf("call_builtin print_int"); //with a function
 			printf("\n");
 			break;
 		case FLOAT_CONSTANT:
+			//printf("%s", constant.val.float_val);
 			printf("real_const r0, %s", constant.val.float_val);
 			printf("\n");
 			printf("call_builtin print_real"); //with a function
 			printf("\n");
 			break;
 		case STRING_CONSTANT:
+			//printf("%s", constant.val.str_val);
 			printf("string_const r0, %s", constant.val.str_val);
 			printf("\n");
 			printf("call_builtin print_string"); //with a function
@@ -698,7 +809,6 @@ static void print_write_constant(Constant constant) {
 	}
 }
 
-//Printing expression types
 int print_expr(Expr expr, int reg, char* proc_id) {
 	int curr_reg = reg;
 	int next_reg;
@@ -741,95 +851,75 @@ int print_expr(Expr expr, int reg, char* proc_id) {
 	return curr_reg;		
 }
 
-int calc(int highBounds[], int lowBounds[], int currDimension, int dimension, int reg, int nextFreeReg) {
+void print_offset(int free_reg, int high, int low){
+	printf("int_const r%d, %d\n", free_reg, 
+			high-low+1);
+	/*printf("mul_int r%d, r%d, r%d\n", 
+			free_reg, free_reg, free_reg2);*/
 
-	if (currDimension <= dimension) {
-
-		int temp = (highBounds[currDimension-1] - lowBounds[currDimension-1]) + 1;
-
-		printf("int_const r%d, %d\n", nextFreeReg, temp);
-
-		int next_reg = calc(highBounds, lowBounds, currDimension+1, dimension, reg+1, nextFreeReg+1);
-
-		if(currDimension != dimension)
-			printf("mul_int r%d, r%d, r%d\n", nextFreeReg, nextFreeReg, nextFreeReg+1);	
-
-		return nextFreeReg;
-	}
-	else {
-		return reg-1;
-	}
 }
 
-int calc2(int highBounds[], int lowBounds[], int currentDimension, int dimension, int next_reg, int curr_reg) {
-	
-	if (currentDimension ==  dimension) {
-		printf("int_const r%d, %d\n", next_reg, lowBounds[currentDimension-1]);
-		printf("sub_int r%d, r%d, r%d\n", next_reg, curr_reg, next_reg);
-		printf("add_int r%d, r%d, r%d\n", next_reg-1, next_reg-1, next_reg);
-		return -1;
-	}
-
-	printf("int_const r%d, %d\n", next_reg, lowBounds[currentDimension-1]);
-	printf("sub_int r%d, r%d, r%d\n", next_reg, curr_reg, next_reg);
-	printf("\n");
-	// calculate for each dimension
-	int stored_reg = calc(highBounds, lowBounds, currentDimension+1, dimension, curr_reg, next_reg+1);
-
-
-	printf("\n");
-	printf("mul_int r%d, r%d, r%d\n", next_reg, next_reg, stored_reg);
-	printf("\n");
-
-	calc2(highBounds, lowBounds, currentDimension+1, dimension, next_reg+1, curr_reg+1);
-
-	if(currentDimension != 1)
-		printf("add_int r%d, r%d, r%d\n", next_reg-1, next_reg-1, next_reg);
-
-	return 0;
-}
 
 int calculate_offset(Exprs expr, int reg, char* id, char* proc_id){
 	int stackNo;
 	int curr_reg = reg;
-	
+	int next_reg;
 	int dimension;
+	int currentD = 2;
 	int size;
 	Intervals array_interval;
 	stackNo = getStackSlotNum(proc_id, id);
 	print_exprs(expr, curr_reg, proc_id);
 	dimension = getArrayDimension(proc_id, id);
+	next_reg = curr_reg + dimension;
 	size = getArraySize(proc_id, id);
-	int bounds[size];
+	
 	array_interval = getIntervals(proc_id, id);
 	int j = 0;
-	int next_reg = curr_reg+dimension;
-
-
-	int highBounds[dimension];
-	int lowBounds[dimension];
-
+	
+	int high_bounds[dimension];
+	int low_bounds[dimension];
 	while (array_interval != NULL){
-		highBounds[j] = array_interval->first->end;
-		lowBounds[j] = array_interval->first->start;
-
+		high_bounds[j] = array_interval->first->end;
+		low_bounds[j] = array_interval->first->start;
 		j++;
 		array_interval = array_interval->rest;
 	}
-
-	int currentDimension = 1;
-
-	calc2(highBounds, lowBounds, currentDimension, dimension, next_reg, curr_reg);
+	int aNum;
+	int array = 0;
+	for (aNum = 1; aNum <= dimension; aNum++){
+		printf("int_const r%d, %d\n", next_reg, low_bounds[array]);
+		printf("sub_int r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
+		array += 1;
+		curr_reg++;
+	}
+	curr_reg = reg;
+	while (currentD <= dimension){
+		print_offset(next_reg, high_bounds[currentD-1],low_bounds[currentD-1]);
+		next_reg++;
+		currentD++;
+	}
+	int new_reg = curr_reg + dimension;
+	for (aNum = 2; aNum <= dimension; aNum++){
+		while (new_reg < next_reg){
+			printf("mul_int r%d, r%d, r%d\n", curr_reg, curr_reg, new_reg);
+			new_reg++;
+		}
+		new_reg--;
+		curr_reg++;
+	}
+	curr_reg = reg;
+	int loop = 0;
+	while (loop < dimension-1){
+		printf("add_int r%d, r%d, r%d\n", curr_reg, curr_reg, curr_reg+loop+1);
+		loop++;
+	}
+	printf("load_address r%d, %d\n", curr_reg+1, stackNo);
+	printf("sub_offset r%d, r%d, r%d\n", curr_reg, curr_reg+1, curr_reg);
 	
-	printf("load_address r%d, %d\n", 0, stackNo);
-	printf("sub_offset r%d, r%d, r%d\n", curr_reg, curr_reg, next_reg);
-
-	// store_indirect r1, r0 # 
-
 	return curr_reg;
 }
 
-//Function parameters
 int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 	int curr_reg = reg;
 	int next_reg;
@@ -841,7 +931,7 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 		case EXPR_ID:
 			ID_type = getType(proc_id,expr->id);
 			stackNo = getStackSlotNum(proc_id, expr->id);
-
+			//printf("%d\n",paramNum);
 			if(isParamRef(callee,paramNum)==0){
 
 				printf("load r%d, %d\n", curr_reg,stackNo);
@@ -878,7 +968,6 @@ int print_arg(Expr expr, int reg, char* proc_id,int paramNum,char* callee) {
 	return curr_reg;		
 }
 
-//Relational operators
 void print_relop_string(int relop, int curr_reg, int next_reg, int ID1, int ID2){
 	int ID = ID1 + ID2; //To see if it's float or int. float = 3/4.
 	switch(relop){
@@ -923,7 +1012,6 @@ void print_relop_string(int relop, int curr_reg, int next_reg, int ID1, int ID2)
 	}
 }
 
-//Unary operators
 void print_unop_string(int unop, int reg, int ID){
 	switch(unop){
 		case UNOP_MINUS:
@@ -967,19 +1055,21 @@ static void print_exprs(Exprs exprs,int reg, char* procName) {
 	}
 }
 
-//Function calls
+
 static void print_fncall(Stmt stmt, int l, char* procName) {
 	printf("# fncall\n");
+	//print_indent(l);
 	if(stmt->info.fncall.args)
 		print_args(stmt->info.fncall.args,0,procName,0,stmt->info.fncall.id);
+	//print_indent(l);
 	printf("call proc_%s\n", stmt->info.fncall.id);
 
 }
 
-//Constants for expressions
 static void print_constant(Constant constant, int reg) {
 	switch (constant.type) {
 		case BOOL_CONSTANT:
+			//printf("%s", constant.val.bool_val ? "true" : "false");
 			printf("int_const r%d, %d\n", reg, constant.val.bool_val);
 			break;
 		case INT_CONSTANT:
@@ -989,7 +1079,8 @@ static void print_constant(Constant constant, int reg) {
 			printf("real_const r%d, %s\n", reg, constant.val.float_val);
 			break;
 		case STRING_CONSTANT:
-			//Should not be possible
+			//printf("%s", constant.val.str_val);
+			//Should not be possible?
 			printf("string_const r%d, %s\n", reg, constant.val.str_val);
 			break;
 	}

@@ -32,7 +32,6 @@ int print_arg(Expr, int, char*,int,char*);
 static void print_args(Exprs,int, char*, int,char* );
 static void print_write(Stmt, int, char*);
 static void print_read(Stmt, int, char*);
-static void print_read_array(Stmt, int);
 static void print_fncall(Stmt, int, char*);
 static void print_intervals(Intervals);
 static void print_interval(Interval);
