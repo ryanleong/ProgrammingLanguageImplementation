@@ -37,11 +37,9 @@ struct proclist {
 typedef struct proclist ProcList;
 typedef struct declaration Declaration;
 
+// Proc list and Declaration list
 ProcList *ListofProcs = NULL;
 ProcList *LastProc = NULL;
-
-ProcList* findProc(char* procName);
-
 
 ProcList* findProc(char* procName) {
     // Set pointer to current proc

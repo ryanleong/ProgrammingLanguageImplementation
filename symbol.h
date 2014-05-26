@@ -9,24 +9,18 @@
  -----------------------------------------------------------------------*/
 #include "ast.h"
 
-// Add Proc
-// Return 1 if success, 0 if failed
-int addProc(char*);
-
-// Check if proc exist
-int procExist(char*);
-
-// Add new declaration
-// Return 1 if success, 0 if failed
-int addDecl(char*, char*, Type, int, int, int);
-
 // Add new array
 // Return 1 if success, 0 if failed
 int addArray(char*, char*, Type, int, 
 	int, int, Intervals*);
 
-// Check if declared (1 = true, 0 = false)
-int inDeclared(char*, char*);
+// Add new declaration
+// Return 1 if success, 0 if failed
+int addDecl(char*, char*, Type, int, int, int);
+
+// Add Proc
+// Return 1 if success, 0 if failed
+int addProc(char*);
 
 // Get type of declaration (returns type)
 // 1 if same type
@@ -34,6 +28,21 @@ int inDeclared(char*, char*);
 // -1 if declaration does not exist
 // -2 if proc does not exist
 int checkType(char*, char*, Type);
+
+// Get number of dimensions for array
+// Returns -1 if error (e.g. No such proc)
+int getArrayDimension(char*, char*);
+
+// Get total size of array
+// Returns -1 if error (e.g. No such proc)
+int getArraySize(char*, char*);
+
+// Get Intervals of array
+Intervals* getIntervals(char*, char*);
+
+// Returns type of param
+// Returns -1 if param is not found
+Type getParamType(char*, int);
 
 // Get size of stack for initializing of proc
 // Returns -1 if error (e.g. No such proc)
@@ -49,15 +58,8 @@ int getStackSlotNum(char*, char*);
 // Returns -1 if var is not found
 Type getType(char*, char*);
 
-// Returns type of param
-// Returns -1 if param is not found
-Type getParamType(char*, int);
-
-// Returns 1 if var is a reference
-// Returns 0 if var is a val
-// Returns -1 if var does not exist
-// Returns -2 if proc does not exist
-int isRef(char*, char*);
+// Check if declared (1 = true, 0 = false)
+int inDeclared(char*, char*);
 
 // Returns 1 if param is a reference
 // Returns 0 if param is a val
@@ -66,13 +68,11 @@ int isRef(char*, char*);
 // USED FOR CALLING PROCS
 int isParamRef(char*, int);
 
-// Get number of dimensions for array
-// Returns -1 if error (e.g. No such proc)
-int getArrayDimension(char*, char*);
+// Returns 1 if var is a reference
+// Returns 0 if var is a val
+// Returns -1 if var does not exist
+// Returns -2 if proc does not exist
+int isRef(char*, char*);
 
-// Get total size of array
-// Returns -1 if error (e.g. No such proc)
-int getArraySize(char*, char*);
-
-// Get Intervals of array
-Intervals* getIntervals(char*, char*);
+// Check if proc exist
+int procExist(char*);
