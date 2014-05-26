@@ -399,7 +399,7 @@ void analyze_assignArray(Assign assign, char* procName)
 void analyze_cond(Cond cond_stmt, char* procName)
 {
     analyze_expr(cond_stmt.cond, procName);
-    if(getExprType(cond_stmt.cond, procName)!=BOOL_TYPE)
+    if(getExprType(cond_stmt.cond, procName)!= BOOL_TYPE)
     {
         printf("condition expression type is not ");
         printf("bool in line %d.\n", cond_stmt.cond->lineno);
@@ -688,6 +688,8 @@ Type getExprType(Expr expr, char* procName)
                     errorNum++;
                     exprType =  ERROR_TYPE;
                 }
+                else
+                    exprType = BOOL_TYPE;
             }
             else if((getExprType(expr->e1, procName)==BOOL_TYPE||
                      getExprType(expr->e1, procName)==BOOL_ARRAY_TYPE)&& 
